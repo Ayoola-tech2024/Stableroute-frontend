@@ -49,7 +49,10 @@ export function PairsDrawer({ pair, onClose }: Props) {
       if (e.key !== 'Tab') return;
 
       if (e.shiftKey) {
-        if (document.activeElement === firstElement || document.activeElement === panel) {
+        if (
+          document.activeElement === firstElement ||
+          document.activeElement === panel
+        ) {
           e.preventDefault();
           lastElement?.focus();
         }
@@ -82,7 +85,9 @@ export function PairsDrawer({ pair, onClose }: Props) {
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-6">
-          <h2 id="drawer-title" className="text-xl font-semibold">Pair Details</h2>
+          <h2 id="drawer-title" className="text-xl font-semibold">
+            Pair Details
+          </h2>
           <IconButton label="Close details" onClick={onClose}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -101,7 +106,9 @@ export function PairsDrawer({ pair, onClose }: Props) {
             <div className="mt-1 font-mono text-lg">{pair.source}</div>
           </section>
           <section>
-            <h3 className="text-sm font-medium text-neutral-500">Destination</h3>
+            <h3 className="text-sm font-medium text-neutral-500">
+              Destination
+            </h3>
             <div className="mt-1 font-mono text-lg">{pair.destination}</div>
           </section>
         </div>

@@ -38,9 +38,7 @@ export function useColumnVisibility() {
     (columnId: ColumnId) => {
       setStored((prev) => {
         const resolved = resolveColumnVisibility(prev);
-        const currentVisible = COLUMN_IDS.filter(
-          (id) => resolved[id] === true
-        );
+        const currentVisible = COLUMN_IDS.filter((id) => resolved[id] === true);
 
         // Refuse to hide the last visible column.
         if (resolved[columnId] === true && currentVisible.length === 1) {

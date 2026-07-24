@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React from "react";
+import React from 'react';
 
 // Context to track the current heading level
 export const LevelContext = React.createContext<number>(2);
@@ -16,7 +16,9 @@ export function DocsSection({ heading, children }: DocsSectionProps) {
 
   return (
     <section>
-      <HeadingTag className="font-mono text-sm font-medium">{heading}</HeadingTag>
+      <HeadingTag className="font-mono text-sm font-medium">
+        {heading}
+      </HeadingTag>
       <div className="mt-1 text-sm text-neutral-700 dark:text-neutral-300">
         <LevelContext.Provider value={level + 1}>
           {children}

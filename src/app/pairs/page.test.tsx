@@ -631,7 +631,9 @@ describe('PairsPage', () => {
       expect(screen.queryByText('USDC', { selector: 'h2' })).toBeNull();
       expect(screen.queryByText('BTC', { selector: 'h2' })).toBeNull();
       expect(screen.getByText('EURC')).toBeInTheDocument();
-      expect(screen.getByText('USDC', { selector: 'span' })).toBeInTheDocument();
+      expect(
+        screen.getByText('USDC', { selector: 'span' })
+      ).toBeInTheDocument();
     });
 
     it('hides the destination column when toggled off', async () => {

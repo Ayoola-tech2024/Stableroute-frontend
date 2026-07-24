@@ -111,7 +111,7 @@ export default function DocsPage() {
             </dd>
           </div>
         ))}
-      </div>
+      </dl>
     </main>
   );
 }

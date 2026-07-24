@@ -136,7 +136,10 @@ describe('resolveColumnVisibility', () => {
   it('strips unknown keys and falls back to defaults', () => {
     // isColumnVisibility rejects unknown keys, so resolveColumnVisibility
     // should return defaults for a corrupt stored value.
-    const corrupt = { source: true, bogus: false } as unknown as ColumnVisibility;
+    const corrupt = {
+      source: true,
+      bogus: false,
+    } as unknown as ColumnVisibility;
     const resolved = resolveColumnVisibility(corrupt);
     expect(resolved).toEqual(DEFAULT_COLUMN_VISIBILITY);
   });

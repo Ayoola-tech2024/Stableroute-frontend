@@ -1,7 +1,4 @@
-import {
-  readDocLanguage,
-  writeDocLanguage,
-} from '@/lib/docLanguage';
+import { readDocLanguage, writeDocLanguage } from '@/lib/docLanguage';
 
 describe('docLanguage', () => {
   beforeEach(() => {

@@ -47,12 +47,14 @@ export function getApiConnectionTroubleshootingGuide(): ApiConnectionTroubleshoo
     {
       symptom: 'Timeout or slow backend',
       module: 'src/lib/apiClient.ts',
-      action: 'Check the backend health, network path, and retry with a higher timeout if needed.',
+      action:
+        'Check the backend health, network path, and retry with a higher timeout if needed.',
     },
     {
       symptom: '401 or 403 authorization failure',
       module: 'src/lib/apiClient.ts',
-      action: 'Confirm the API key is valid, active, and authorized for the requested route.',
+      action:
+        'Confirm the API key is valid, active, and authorized for the requested route.',
     },
   ];
 }

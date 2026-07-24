@@ -68,12 +68,12 @@ Two hooks model the async lifecycle of every remote data request:
 
 **Source:** `src/lib/useApi.ts`
 
-| Status   | Available fields         |
-|----------|--------------------------|
-| `idle`   | `refetch`                |
-| `loading`| `refetch`                |
-| `error`  | `error`, `refetch`       |
-| `success`| `data`, `refetch`        |
+| Status    | Available fields   |
+| --------- | ------------------ |
+| `idle`    | `refetch`          |
+| `loading` | `refetch`          |
+| `error`   | `error`, `refetch` |
+| `success` | `data`, `refetch`  |
 
 - Accepts a URL path string or `null` (when `null` the status is `idle`).
 - Re-fetches automatically when the path changes.
@@ -92,48 +92,48 @@ incrementing `requestIdRef`.
 
 ### Pairs
 
-| Step | Module / Component | What happens |
-|------|-------------------|--------------|
-| 1 | `src/app/pairs/page.tsx` | Server component; exports metadata, renders `PairsClient`. |
-| 2 | `src/app/pairs/Client.tsx` | Calls `useApi<{ pairs: Pair[] }>('/api/v1/pairs')` on mount. |
-| 3 | `src/lib/useApi.ts` | Fires `apiGet`, manages `loading` / `error` / `success` state. |
-| 4 | `src/lib/apiClient.ts` | Sends GET to `<api-base>/api/v1/pairs` with timeout & retry. |
-| 5 | `src/lib/types.ts` | Response parsed as `{ pairs: Pair[] }` (each pair: `{ source, destination }`). |
-| 6 | `src/app/pairs/Client.tsx` | Extracts `api.data.pairs`; passes through `filterPairs` + `groupBySource` (both from `src/lib/pairsTransforms.ts`). |
-| 7 | `src/lib/pairsTransforms.ts` | `filterPairs` – case-insensitive substring match on source/destination. `groupBySource` – produces `[source, destinations[]]` tuples, sorted. |
-| 8 | `src/app/pairs/Client.tsx` | Renders grouped list with copy, delete, and link-to-quote actions. |
-| 9 | Delete action | Calls `apiDelete` then `api.refetch()` to re-sync. |
+| Step | Module / Component           | What happens                                                                                                                                  |
+| ---- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | `src/app/pairs/page.tsx`     | Server component; exports metadata, renders `PairsClient`.                                                                                    |
+| 2    | `src/app/pairs/Client.tsx`   | Calls `useApi<{ pairs: Pair[] }>('/api/v1/pairs')` on mount.                                                                                  |
+| 3    | `src/lib/useApi.ts`          | Fires `apiGet`, manages `loading` / `error` / `success` state.                                                                                |
+| 4    | `src/lib/apiClient.ts`       | Sends GET to `<api-base>/api/v1/pairs` with timeout & retry.                                                                                  |
+| 5    | `src/lib/types.ts`           | Response parsed as `{ pairs: Pair[] }` (each pair: `{ source, destination }`).                                                                |
+| 6    | `src/app/pairs/Client.tsx`   | Extracts `api.data.pairs`; passes through `filterPairs` + `groupBySource` (both from `src/lib/pairsTransforms.ts`).                           |
+| 7    | `src/lib/pairsTransforms.ts` | `filterPairs` – case-insensitive substring match on source/destination. `groupBySource` – produces `[source, destinations[]]` tuples, sorted. |
+| 8    | `src/app/pairs/Client.tsx`   | Renders grouped list with copy, delete, and link-to-quote actions.                                                                            |
+| 9    | Delete action                | Calls `apiDelete` then `api.refetch()` to re-sync.                                                                                            |
 
 ### Stats
 
-| Step | Module / Component | What happens |
-|------|-------------------|--------------|
-| 1 | `src/app/stats/page.tsx` | Server component; exports metadata, renders `StatsClient`. |
-| 2 | `src/app/stats/Client.tsx` | Calls `useApi<Stats>('/api/v1/stats')` where `Stats = { totalPairs, paused }`. |
-| 3 | `src/lib/useApi.ts` | Fires `apiGet`, manages lifecycle states. |
-| 4 | `src/app/stats/Client.tsx` | On success, applies `formatNumber` (from `src/lib/format.ts`) for display. |
-| 5 | Polling | A 5-second `setInterval(refetch, 5000)` keeps metrics fresh. |
-| 6 | Export | `buildStatsSnapshot` → `statsSnapshotToJson` / `statsSnapshotToCsv` → `triggerDownload`. All pure functions in `Client.tsx`. |
+| Step | Module / Component         | What happens                                                                                                                 |
+| ---- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1    | `src/app/stats/page.tsx`   | Server component; exports metadata, renders `StatsClient`.                                                                   |
+| 2    | `src/app/stats/Client.tsx` | Calls `useApi<Stats>('/api/v1/stats')` where `Stats = { totalPairs, paused }`.                                               |
+| 3    | `src/lib/useApi.ts`        | Fires `apiGet`, manages lifecycle states.                                                                                    |
+| 4    | `src/app/stats/Client.tsx` | On success, applies `formatNumber` (from `src/lib/format.ts`) for display.                                                   |
+| 5    | Polling                    | A 5-second `setInterval(refetch, 5000)` keeps metrics fresh.                                                                 |
+| 6    | Export                     | `buildStatsSnapshot` → `statsSnapshotToJson` / `statsSnapshotToCsv` → `triggerDownload`. All pure functions in `Client.tsx`. |
 
 ### Quote
 
-| Step | Module / Component | What happens |
-|------|-------------------|--------------|
-| 1 | `src/app/quote/Client.tsx` | Form collects `sourceAsset`, `destAsset`, `amount`. |
-| 2 | Validation | Client-side validation in `Client.tsx` (asset code pattern, positive integer amount). |
-| 3 | Request | Calls `apiFetch<Quote>(path)` with query params `?source_asset=...&dest_asset=...&amount=...`. Aborts previous in-flight request via `AbortController`. |
-| 4 | `src/lib/apiClient.ts` | Sends GET, parses `Quote` response. |
-| 5 | Display | Formats amount via `formatQuoteAmountDisplay` / `formatQuoteRateDisplay` (both from `src/lib/format.ts`). |
-| 6 | History | Inputs persisted to `localStorage` via `useLocalStorage` (`src/lib/useLocalStorage.ts`). |
+| Step | Module / Component         | What happens                                                                                                                                            |
+| ---- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | `src/app/quote/Client.tsx` | Form collects `sourceAsset`, `destAsset`, `amount`.                                                                                                     |
+| 2    | Validation                 | Client-side validation in `Client.tsx` (asset code pattern, positive integer amount).                                                                   |
+| 3    | Request                    | Calls `apiFetch<Quote>(path)` with query params `?source_asset=...&dest_asset=...&amount=...`. Aborts previous in-flight request via `AbortController`. |
+| 4    | `src/lib/apiClient.ts`     | Sends GET, parses `Quote` response.                                                                                                                     |
+| 5    | Display                    | Formats amount via `formatQuoteAmountDisplay` / `formatQuoteRateDisplay` (both from `src/lib/format.ts`).                                               |
+| 6    | History                    | Inputs persisted to `localStorage` via `useLocalStorage` (`src/lib/useLocalStorage.ts`).                                                                |
 
 ### Events
 
-| Step | Module / Component | What happens |
-|------|-------------------|--------------|
-| 1 | `src/app/events/Client.tsx` | Calls `useApi<unknown>('/api/v1/events?limit=100')`. |
-| 2 | Parse | Raw response is passed through `parseEventsResponse` from `src/lib/events.ts`. Invalid/malformed records are dropped. Payloads are safe-stringified (circular refs → `"[Circular]"`, truncation at 4000 chars). |
-| 3 | Filter | Client-side type filter (case-insensitive substring). |
-| 4 | Export | `buildEventsCsv` from `src/lib/events.ts` → `downloadCsv`. |
+| Step | Module / Component          | What happens                                                                                                                                                                                                    |
+| ---- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | `src/app/events/Client.tsx` | Calls `useApi<unknown>('/api/v1/events?limit=100')`.                                                                                                                                                            |
+| 2    | Parse                       | Raw response is passed through `parseEventsResponse` from `src/lib/events.ts`. Invalid/malformed records are dropped. Payloads are safe-stringified (circular refs → `"[Circular]"`, truncation at 4000 chars). |
+| 3    | Filter                      | Client-side type filter (case-insensitive substring).                                                                                                                                                           |
+| 4    | Export                      | `buildEventsCsv` from `src/lib/events.ts` → `downloadCsv`.                                                                                                                                                      |
 
 ### API keys & Webhooks
 
@@ -148,13 +148,13 @@ Both follow the same CRUD pattern:
 Transforms are pure functions that derive display-ready data from API
 responses. They live in:
 
-| File | Purpose |
-|------|---------|
-| `src/lib/pairsTransforms.ts` | `filterPairs`, `groupBySource` |
-| `src/lib/format.ts` | `formatStroops`, `formatNumber`, `formatQuoteAmountDisplay`, `formatQuoteRateDisplay`, `formatTime`, `formatTimestamp` |
-| `src/lib/events.ts` | `parseEventsResponse`, `buildEventsCsv`, `safeStringifyPayload` |
-| `src/lib/quote.ts` | `normalizeAsset`, `isValidAmount` |
-| `src/lib/clipboard.ts` | `writeToClipboard` |
+| File                         | Purpose                                                                                                                |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/pairsTransforms.ts` | `filterPairs`, `groupBySource`                                                                                         |
+| `src/lib/format.ts`          | `formatStroops`, `formatNumber`, `formatQuoteAmountDisplay`, `formatQuoteRateDisplay`, `formatTime`, `formatTimestamp` |
+| `src/lib/events.ts`          | `parseEventsResponse`, `buildEventsCsv`, `safeStringifyPayload`                                                        |
+| `src/lib/quote.ts`           | `normalizeAsset`, `isValidAmount`                                                                                      |
+| `src/lib/clipboard.ts`       | `writeToClipboard`                                                                                                     |
 
 All transforms are tested at `src/lib/__tests__/`.
 

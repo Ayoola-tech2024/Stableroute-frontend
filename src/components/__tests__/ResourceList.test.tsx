@@ -148,7 +148,10 @@ describe('ResourceList — table mode', () => {
       renderRow: (item: Sample) => <span>{item.name}</span>,
       caption: 'All items',
       tableHeaders: TABLE_HEADERS,
-      renderCells: (item: Sample, { requestRemove }: { requestRemove: () => void }) => [
+      renderCells: (
+        item: Sample,
+        { requestRemove }: { requestRemove: () => void }
+      ) => [
         <span key="name">{item.name}</span>,
         <button key="rm" type="button" onClick={requestRemove}>
           Remove {item.name}

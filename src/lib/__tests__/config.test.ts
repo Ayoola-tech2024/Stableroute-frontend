@@ -37,7 +37,8 @@ describe('config', () => {
         expect.objectContaining({
           symptom: 'Misconfigured base URL',
           module: 'src/lib/config.ts',
-          action: 'Update NEXT_PUBLIC_STABLEROUTE_API_BASE to the backend origin.',
+          action:
+            'Update NEXT_PUBLIC_STABLEROUTE_API_BASE to the backend origin.',
         }),
         expect.objectContaining({
           symptom: 'CORS or browser-blocked request',
@@ -48,12 +49,14 @@ describe('config', () => {
         expect.objectContaining({
           symptom: 'Timeout or slow backend',
           module: 'src/lib/apiClient.ts',
-          action: 'Check the backend health, network path, and retry with a higher timeout if needed.',
+          action:
+            'Check the backend health, network path, and retry with a higher timeout if needed.',
         }),
         expect.objectContaining({
           symptom: '401 or 403 authorization failure',
           module: 'src/lib/apiClient.ts',
-          action: 'Confirm the API key is valid, active, and authorized for the requested route.',
+          action:
+            'Confirm the API key is valid, active, and authorized for the requested route.',
         }),
       ])
     );

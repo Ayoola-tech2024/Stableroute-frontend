@@ -14,9 +14,7 @@ beforeEach(() => {
 describe('ColumnVisibilityToggle', () => {
   it('renders a Columns button', () => {
     render(<ColumnVisibilityToggle {...defaultProps} />);
-    expect(
-      screen.getByRole('button', { name: /Columns/ })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Columns/ })).toBeInTheDocument();
   });
 
   it('does not show the menu initially', () => {

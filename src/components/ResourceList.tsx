@@ -154,8 +154,7 @@ export function ResourceList<T>({
               <li
                 key={getKey(item)}
                 className={
-                  rowClassName ??
-                  'flex items-center justify-between gap-3 py-3'
+                  rowClassName ?? 'flex items-center justify-between gap-3 py-3'
                 }
               >
                 {renderRow(item, {

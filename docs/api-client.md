@@ -189,18 +189,18 @@ const created = await apiPost<CreateApiKeyResponse>(
 All validators live in `src/lib/validate.ts`. Each is a pure function with
 no external dependencies.
 
-| Guard | Validates |
-|---|---|
-| `isPair` | `{ source: string; destination: string }` |
-| `isQuote` | `{ source_asset, dest_asset, amount, estimated_rate, route[] }` |
-| `isApiKey` | `{ prefix: string; label: string; createdAt: number }` |
-| `isCreateApiKeyResponse` | `{ key: string; prefix?: string }` |
-| `isWebhook` | `{ id, url, events (valid event types), createdAt }` |
-| `isRouterStatus` | `{ paused: boolean }` |
-| `isStats` | `{ totalPairs: number; paused: boolean }` |
-| `isPairsResponse` | `{ pairs: Pair[] }` |
-| `isApiKeyListResponse` | `{ items: ApiKey[] }` |
-| `isWebhookListResponse` | `{ items: Webhook[] }` |
+| Guard                    | Validates                                                       |
+| ------------------------ | --------------------------------------------------------------- |
+| `isPair`                 | `{ source: string; destination: string }`                       |
+| `isQuote`                | `{ source_asset, dest_asset, amount, estimated_rate, route[] }` |
+| `isApiKey`               | `{ prefix: string; label: string; createdAt: number }`          |
+| `isCreateApiKeyResponse` | `{ key: string; prefix?: string }`                              |
+| `isWebhook`              | `{ id, url, events (valid event types), createdAt }`            |
+| `isRouterStatus`         | `{ paused: boolean }`                                           |
+| `isStats`                | `{ totalPairs: number; paused: boolean }`                       |
+| `isPairsResponse`        | `{ pairs: Pair[] }`                                             |
+| `isApiKeyListResponse`   | `{ items: ApiKey[] }`                                           |
+| `isWebhookListResponse`  | `{ items: Webhook[] }`                                          |
 
 Each guard also has a `parse*` counterpart that throws `ValidationError`
 with structural metadata (field path, expected type, received type) rather
@@ -211,9 +211,9 @@ than the raw value — preventing sensitive data from leaking into logs.
 ```ts
 class ValidationError extends Error {
   code: 'VALIDATION_ERROR';
-  field: string;     // e.g. "root", "events[2].type", "key"
-  expected: string;  // e.g. "string", "boolean", "webhook_event_type"
-  received: string;  // type description only — never the raw value
+  field: string; // e.g. "root", "events[2].type", "key"
+  expected: string; // e.g. "string", "boolean", "webhook_event_type"
+  received: string; // type description only — never the raw value
 }
 ```
 

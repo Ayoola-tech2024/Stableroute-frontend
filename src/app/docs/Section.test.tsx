@@ -1,9 +1,9 @@
-import { render } from "@testing-library/react";
-import { DocsSection } from "./Section";
+import { render } from '@testing-library/react';
+import { DocsSection } from './Section';
 
 function getHeadingOutline(container: HTMLElement) {
   const headings = Array.from(
-    container.querySelectorAll("h1, h2, h3, h4, h5, h6"),
+    container.querySelectorAll('h1, h2, h3, h4, h5, h6')
   );
   return headings.map((h) => parseInt(h.tagName[1], 10));
 }
@@ -17,22 +17,22 @@ function assertValidOutline(levels: number[]) {
   }
 }
 
-describe("DocsSection heading outline", () => {
-  it("forms a valid outline without skipping levels (single section page)", () => {
+describe('DocsSection heading outline', () => {
+  it('forms a valid outline without skipping levels (single section page)', () => {
     const { container } = render(
       <main>
         <h1>Title</h1>
         <DocsSection heading="A">
           <p>content</p>
         </DocsSection>
-      </main>,
+      </main>
     );
     const outline = getHeadingOutline(container);
     assertValidOutline(outline);
     expect(outline).toEqual([1, 2]);
   });
 
-  it("forms a valid outline without skipping levels (deeply nested section)", () => {
+  it('forms a valid outline without skipping levels (deeply nested section)', () => {
     const { container } = render(
       <main>
         <h1>Title</h1>
@@ -49,7 +49,7 @@ describe("DocsSection heading outline", () => {
             </DocsSection>
           </DocsSection>
         </DocsSection>
-      </main>,
+      </main>
     );
     const outline = getHeadingOutline(container);
     assertValidOutline(outline);

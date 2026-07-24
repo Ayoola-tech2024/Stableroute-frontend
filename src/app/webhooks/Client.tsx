@@ -160,7 +160,11 @@ export default function WebhooksClient() {
           <span key="registered" className="text-xs text-neutral-500">
             <TimeAgo ts={hook.createdAt} />
           </span>,
-          <IconButton key="actions" label="Remove webhook" onClick={requestRemove}>
+          <IconButton
+            key="actions"
+            label="Remove webhook"
+            onClick={requestRemove}
+          >
             ×
           </IconButton>,
         ]}

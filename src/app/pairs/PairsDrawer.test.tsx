@@ -9,13 +9,12 @@ function TestWrapper() {
 
   return (
     <div>
-      <button onClick={() => setActivePair({ source: 'EUR', destination: 'USD' })}>
+      <button
+        onClick={() => setActivePair({ source: 'EUR', destination: 'USD' })}
+      >
         Open Details
       </button>
-      <PairsDrawer
-        pair={activePair}
-        onClose={() => setActivePair(null)}
-      />
+      <PairsDrawer pair={activePair} onClose={() => setActivePair(null)} />
     </div>
   );
 }
@@ -44,7 +43,7 @@ describe('PairsDrawer', () => {
     await user.click(screen.getByRole('button', { name: 'Open Details' }));
 
     const closeButton = screen.getByRole('button', { name: 'Close details' });
-    
+
     // Initial focus is on the panel (tabIndex="-1")
     const panel = screen.getByRole('dialog').firstChild as HTMLElement;
     expect(document.activeElement).toBe(panel);

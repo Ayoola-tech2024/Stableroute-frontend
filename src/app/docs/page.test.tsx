@@ -34,7 +34,7 @@ describe('DocsPage', () => {
 
     expect(levels.length).toBeGreaterThan(0);
     expect(levels[0]).toBe(1); // Page starts with h1
-    
+
     for (let i = 1; i < levels.length; i++) {
       const prev = levels[i - 1];
       const curr = levels[i];
@@ -90,7 +90,9 @@ describe('DocsPage', () => {
 
   it('renders copy buttons for each endpoint', () => {
     render(<DocsPage />);
-    const copyButtons = screen.getAllByRole('button', { name: /Copy .* code for/ });
+    const copyButtons = screen.getAllByRole('button', {
+      name: /Copy .* code for/,
+    });
     expect(copyButtons.length).toBe(5);
   });
 });

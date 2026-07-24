@@ -15,6 +15,7 @@ import { useApi } from '@/lib/useApi';
 import { useColumnVisibility } from '@/lib/useColumnVisibility';
 import { filterPairs, groupBySource } from './pairsUtils';
 import { type Pair } from '@/lib/types';
+import { isPairsResponse } from '@/lib/validate';
 import { PairsDrawer } from './PairsDrawer';
 
 export default function PairsClient() {
@@ -154,7 +155,9 @@ export default function PairsClient() {
                           </Link>
                           <button
                             type="button"
-                            onClick={() => setActivePair({ source, destination: dest })}
+                            onClick={() =>
+                              setActivePair({ source, destination: dest })
+                            }
                             className="rounded border px-3 py-1 text-xs dark:border-neutral-700"
                           >
                             Details
@@ -219,10 +222,7 @@ export default function PairsClient() {
         }}
         onCancel={() => setPendingDelete(null)}
       />
-      <PairsDrawer
-        pair={activePair}
-        onClose={() => setActivePair(null)}
-      />
+      <PairsDrawer pair={activePair} onClose={() => setActivePair(null)} />
     </main>
   );
 }
