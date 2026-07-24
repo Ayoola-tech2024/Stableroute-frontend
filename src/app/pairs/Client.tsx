@@ -145,44 +145,52 @@ export default function PairsClient() {
                   {destinations.map((dest) => (
                     <li key={`${source}::${dest}`} className="px-4 py-3">
                       <div className="flex items-center justify-between gap-3">
-                        <span className="font-mono text-sm">{dest}</span>
-                        <div className="flex gap-2">
-                          <Link
-                            href={`/quote?source=${encodeURIComponent(source)}&dest=${encodeURIComponent(dest)}`}
-                            className="rounded border px-3 py-1 text-xs dark:border-neutral-700"
-                          >
-                            Quote
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setActivePair({ source, destination: dest })
-                            }
-                            className="rounded border px-3 py-1 text-xs dark:border-neutral-700"
-                          >
-                            Details
-                          </button>
-                          <button
-                            type="button"
-                            aria-label={`Copy pair symbol ${source}/${dest}`}
-                            disabled={copyingSymbol === `${source}/${dest}`}
-                            onClick={() =>
-                              void copyPairSymbol(`${source}/${dest}`)
-                            }
-                            className="rounded border px-3 py-1 text-xs disabled:opacity-50 dark:border-neutral-700"
-                          >
-                            Copy
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setPendingDelete({ source, destination: dest })
-                            }
-                            className="rounded border px-3 py-1 text-xs"
-                          >
-                            Delete
-                          </button>
-                        </div>
+                        {isColumnVisible('destination') ? (
+                          <span className="font-mono text-sm">{dest}</span>
+                        ) : !isColumnVisible('source') ? (
+                          <span className="font-mono text-sm">{`${source}/${dest}`}</span>
+                        ) : (
+                          <span />
+                        )}
+                        {isColumnVisible('actions') && (
+                          <div className="flex gap-2">
+                            <Link
+                              href={`/quote?source=${encodeURIComponent(source)}&dest=${encodeURIComponent(dest)}`}
+                              className="rounded border px-3 py-1 text-xs dark:border-neutral-700"
+                            >
+                              Quote
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setActivePair({ source, destination: dest })
+                              }
+                              className="rounded border px-3 py-1 text-xs dark:border-neutral-700"
+                            >
+                              Details
+                            </button>
+                            <button
+                              type="button"
+                              aria-label={`Copy pair symbol ${source}/${dest}`}
+                              disabled={copyingSymbol === `${source}/${dest}`}
+                              onClick={() =>
+                                void copyPairSymbol(`${source}/${dest}`)
+                              }
+                              className="rounded border px-3 py-1 text-xs disabled:opacity-50 dark:border-neutral-700"
+                            >
+                              Copy
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setPendingDelete({ source, destination: dest })
+                              }
+                              className="rounded border px-3 py-1 text-xs"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
                       </div>
                       {copyFallback === `${source}/${dest}` && (
                         <label className="mt-3 block text-xs">

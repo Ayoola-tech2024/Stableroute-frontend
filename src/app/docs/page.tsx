@@ -5,7 +5,7 @@ import { CodeSample, type Language } from '@/components/CodeSample';
 export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
-  title: 'Docs — StableRoute',
+  title: 'Docs',
   description: 'Short reference for the StableRoute HTTP API common endpoints.',
 };
 
