@@ -1,4 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { PairsDrawer } from './PairsDrawer';
 import { type Pair } from '@/lib/types';
@@ -19,69 +20,61 @@ function TestWrapper() {
 }
 
 describe('PairsDrawer', () => {
-  it('opens with details and closes on Escape', () => {
+  it('opens with details and closes on Escape', async () => {
+    const user = userEvent.setup();
     render(<TestWrapper />);
 
     const trigger = screen.getByRole('button', { name: 'Open Details' });
-    fireEvent.click(trigger);
+    await user.click(trigger);
 
     const dialog = screen.getByRole('dialog');
     expect(dialog).toBeInTheDocument();
     expect(screen.getByText('EUR')).toBeInTheDocument();
     expect(screen.getByText('USD')).toBeInTheDocument();
 
-    fireEvent.keyDown(window, { key: 'Escape' });
+    await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('traps focus inside the drawer', () => {
+  it('traps focus inside the drawer', async () => {
+    const user = userEvent.setup();
     render(<TestWrapper />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Details' }));
+    await user.click(screen.getByRole('button', { name: 'Open Details' }));
 
     const closeButton = screen.getByRole('button', { name: 'Close details' });
-    const panel = screen.getByRole('dialog').firstChild as HTMLElement;
 
     // Initial focus is on the panel (tabIndex="-1")
+    const panel = screen.getByRole('dialog').firstChild as HTMLElement;
     expect(document.activeElement).toBe(panel);
 
-    // Focus the first element inside panel
-    closeButton.focus();
+    // Tab moves to the first focusable element (close button)
+    await user.tab();
     expect(document.activeElement).toBe(closeButton);
 
     // Tabbing past the last element loops back to the first
-    fireEvent.keyDown(panel, { key: 'Tab' });
+    await user.tab();
     expect(document.activeElement).toBe(closeButton);
 
     // Shift+Tab from first loops to last
-    fireEvent.keyDown(panel, { key: 'Tab', shiftKey: true });
+    await user.keyboard('{Shift>}{Tab}{/Shift}');
     expect(document.activeElement).toBe(closeButton);
   });
 
-  it('returns focus to the trigger upon closing', () => {
+  it('returns focus to the trigger upon closing', async () => {
+    const user = userEvent.setup();
     render(<TestWrapper />);
 
     const trigger = screen.getByRole('button', { name: 'Open Details' });
     trigger.focus();
-    fireEvent.click(trigger);
+    await user.click(trigger);
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
 
     const closeButton = screen.getByRole('button', { name: 'Close details' });
-    fireEvent.click(closeButton);
+    await user.click(closeButton);
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(document.activeElement).toBe(trigger);
-  });
-
-  it('renders volume formatted compactly with title and aria-label when volume is provided', () => {
-    const pair: Pair = { source: 'USDC', destination: 'EURC', volume: 1500000 };
-    render(<PairsDrawer pair={pair} onClose={() => {}} />);
-
-    expect(screen.getByText('24h Volume')).toBeInTheDocument();
-    const volDisplay = screen.getByText('1.5M');
-    expect(volDisplay).toBeInTheDocument();
-    expect(volDisplay).toHaveAttribute('title', '1,500,000');
-    expect(volDisplay).toHaveAttribute('aria-label', '1,500,000');
   });
 });

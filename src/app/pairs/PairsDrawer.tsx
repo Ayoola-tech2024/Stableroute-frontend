@@ -3,7 +3,6 @@
 import { useEffect, useRef } from 'react';
 import { type Pair } from '@/lib/types';
 import { IconButton } from '@/components/IconButton';
-import { formatCompactNumber, formatNumber } from '@/lib/format';
 
 type Props = {
   pair: Pair | null;
@@ -112,20 +111,6 @@ export function PairsDrawer({ pair, onClose }: Props) {
             </h3>
             <div className="mt-1 font-mono text-lg">{pair.destination}</div>
           </section>
-          {pair.volume !== undefined && (
-            <section>
-              <h3 className="text-sm font-medium text-neutral-500">
-                24h Volume
-              </h3>
-              <div
-                className="mt-1 font-mono text-lg"
-                title={formatNumber(pair.volume)}
-                aria-label={formatNumber(pair.volume)}
-              >
-                {formatCompactNumber(pair.volume)}
-              </div>
-            </section>
-          )}
         </div>
       </div>
     </div>

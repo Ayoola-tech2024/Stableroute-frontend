@@ -11,12 +11,11 @@ import { Spinner } from '@/components/Spinner';
 import { useToast } from '@/components/ToastProvider';
 import { apiDelete } from '@/lib/apiClient';
 import { writeToClipboard } from '@/lib/clipboard';
-import { formatCompactNumber, formatNumber } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
 import { useColumnVisibility } from '@/lib/useColumnVisibility';
-import { isPairsResponse } from '@/lib/validate';
 import { filterPairs, groupBySource } from './pairsUtils';
 import { type Pair } from '@/lib/types';
+import { isPairsResponse } from '@/lib/validate';
 import { PairsDrawer } from './PairsDrawer';
 
 export default function PairsClient() {
@@ -78,12 +77,7 @@ export default function PairsClient() {
             Pairs
             {pairs !== null && (
               <Badge variant="neutral">
-                <span
-                  title={formatNumber(pairs.length)}
-                  aria-label={`${formatNumber(pairs.length)} pair${pairs.length !== 1 ? 's' : ''}`}
-                >
-                  {`${formatCompactNumber(pairs.length)} pair${pairs.length !== 1 ? 's' : ''}`}
-                </span>
+                {pairs.length} pair{pairs.length !== 1 ? 's' : ''}
               </Badge>
             )}
           </span>

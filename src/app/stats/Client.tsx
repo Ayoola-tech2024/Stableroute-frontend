@@ -2,11 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useApi } from '@/lib/useApi';
-import {
-  formatCompactNumber,
-  formatNumber,
-  formatTimestamp,
-} from '@/lib/format';
+import { formatNumber, formatTimestamp } from '@/lib/format';
 import { Button } from '@/components/Button';
 import { EmptyState } from '@/components/EmptyState';
 import { Spinner } from '@/components/Spinner';
@@ -78,7 +74,7 @@ export function buildStatsSnapshot(
       {
         label: 'Pairs',
         value: data.totalPairs,
-        display: formatCompactNumber(data.totalPairs),
+        display: formatNumber(data.totalPairs),
       },
       {
         label: 'Status',
@@ -197,12 +193,7 @@ export default function StatsClient() {
             Router metrics
           </h2>
           <dl className="grid grid-cols-2 gap-4">
-            <StatTile
-              label="Pairs"
-              value={formatCompactNumber(data.totalPairs)}
-              title={formatNumber(data.totalPairs)}
-              aria-label={formatNumber(data.totalPairs)}
-            />
+            <StatTile label="Pairs" value={formatNumber(data.totalPairs)} />
             <StatTile label="Status" value={data.paused ? 'Paused' : 'Live'} />
           </dl>
           {lastUpdatedAt !== null && <LastUpdated timestamp={lastUpdatedAt} />}

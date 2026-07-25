@@ -14,7 +14,6 @@
 export type Pair = {
   source: string;
   destination: string;
-  volume?: number;
 };
 
 // ============================================================================
