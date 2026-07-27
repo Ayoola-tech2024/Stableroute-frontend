@@ -517,7 +517,7 @@ describe('QuotePage', () => {
     );
   });
 
-  it('omits the requestId line when the backend does not include one', async () => {
+  it('surfaces a client requestId when the backend does not include one', async () => {
     globalThis.fetch = jest.fn().mockResolvedValueOnce({
       ok: false,
       status: 400,
@@ -549,7 +549,11 @@ describe('QuotePage', () => {
     await waitFor(() => {
       expect(screen.getByText(/must differ/i)).toBeInTheDocument();
     });
-    expect(screen.getByRole('alert')).not.toHaveTextContent(/Request ID/);
+    // Client-generated X-Request-Id is surfaced for support correlation.
+    expect(screen.getByRole('alert')).toHaveTextContent(/Request ID:/);
+    expect(screen.getByRole('alert').textContent).toMatch(
+      /Request ID:\s*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
+    );
   });
 });
 
