@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { QuoteHistory, HistoryEntry } from './QuoteHistory';
 
 describe('QuoteHistory Component Contract & Behavior', () => {
+describe('QuoteHistory Component', () => {
   const sampleHistory: HistoryEntry[] = [
     { source: 'USDC', dest: 'EURC', amount: '1000000', savedAt: 1600000000000 },
     { source: 'XLM', dest: 'USDC', amount: '500000', savedAt: 1600000001000 },
@@ -16,6 +17,7 @@ describe('QuoteHistory Component Contract & Behavior', () => {
   });
 
   it('renders history items with semantic accessibility wiring and handles entry selection', () => {
+  it('renders history items and handles entry selection', () => {
     const onSelect = jest.fn();
     render(<QuoteHistory history={sampleHistory} onSelect={onSelect} />);
 
@@ -31,6 +33,10 @@ describe('QuoteHistory Component Contract & Behavior', () => {
   it('memoizes rendering and skips re-renders when props remain stable', () => {
     let renderCount = 0;
 
+  it('memoizes rendering and skips re-renders when props are stable', () => {
+    let renderCount = 0;
+
+    // Component wrapper that tracks render count of memoized QuoteHistory
     const TrackedHistory = React.memo((props: React.ComponentProps<typeof QuoteHistory>) => {
       renderCount++;
       return <QuoteHistory {...props} />;
@@ -56,6 +62,9 @@ describe('QuoteHistory Component Contract & Behavior', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Re-render Parent/i }));
     expect(renderCount).toBe(1);
+    // Cause parent state change
+    fireEvent.click(screen.getByRole('button', { name: /Re-render Parent/i }));
+    expect(renderCount).toBe(1); // Render count remains 1 because props are stable!
 
     fireEvent.click(screen.getByRole('button', { name: /Re-render Parent/i }));
     expect(renderCount).toBe(1);
