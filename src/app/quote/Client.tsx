@@ -121,8 +121,7 @@ export default function QuoteClient() {
     }));
   };
 
-  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const executeQuoteRequest = useCallback(async () => {
     const now = Date.now();
     const lastSubmitAt = lastSubmitAtRef.current;
     const isCoolingDown =
@@ -174,8 +173,8 @@ export default function QuoteClient() {
 
     const controller = new AbortController();
     requestControllerRef.current = controller;
-    const requestId = activeRequestRef.current + 1;
-    activeRequestRef.current = requestId;
+    const currentRequestId = activeRequestRef.current + 1;
+    activeRequestRef.current = currentRequestId;
 
     setLoading(true);
     try {
@@ -188,31 +187,29 @@ export default function QuoteClient() {
         { signal: controller.signal },
         { validate: isQuote }
       );
-      if (requestId !== activeRequestRef.current) return;
+      if (currentRequestId !== activeRequestRef.current) return;
       setQuote(body);
       setHistory(pushHistory(inputs));
     } catch (err) {
-      if (requestId !== activeRequestRef.current) return;
+      if (currentRequestId !== activeRequestRef.current) return;
       if (controller.signal.aborted) return;
       const apiError = err as ApiError & { requestId?: string };
       setFormError(apiError.message ?? 'quote request failed');
       setRequestId(apiError.requestId ?? null);
     } finally {
-      if (requestId === activeRequestRef.current) {
+      if (currentRequestId === activeRequestRef.current) {
         setLoading(false);
         if (requestControllerRef.current === controller) {
           requestControllerRef.current = null;
         }
       }
     }
-  };
+  }, [amount, destAsset, setSavedInputs, sourceAsset]);
 
-  // Retry wrapper for the quote request – re‑uses the existing submission logic.
-  const retryQuote = useCallback(() => {
-    // Create a synthetic submit event to trigger the same validation & request flow.
-    // The event type is cast to any to satisfy the FormEvent generic.
-    onSubmit(new Event('submit') as any);
-  }, [onSubmit]);
+  const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    executeQuoteRequest();
+  };
 
   return (
     <main
@@ -318,7 +315,7 @@ export default function QuoteClient() {
           quote ? `${((quote.estimated_rate - 1) * 100).toFixed(2)}%` : undefined
         }
         errorMessage={formError ?? undefined}
-        onRetry={formError ? retryQuote : undefined}
+        onRetry={formError ? executeQuoteRequest : undefined}
       />
       {formError && (
         <div role="alert" className="text-sm text-rose-700 dark:text-rose-400">

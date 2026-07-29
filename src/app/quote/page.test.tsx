@@ -79,7 +79,8 @@ describe('QuotePage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole('status')).toHaveTextContent(/USDC → EURC/);
+      const quoteStatus = screen.getAllByRole('status').find((el) => el.textContent?.includes('USDC'));
+      expect(quoteStatus).toHaveTextContent(/USDC → EURC/);
     });
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining(
@@ -131,7 +132,8 @@ describe('QuotePage', () => {
     } as unknown as Response);
 
     await waitFor(() => {
-      expect(screen.getByRole('status')).toHaveTextContent(/USDC → EURC/);
+      const quoteStatus = screen.getAllByRole('status').find((el) => el.textContent?.includes('USDC'));
+      expect(quoteStatus).toHaveTextContent(/USDC → EURC/);
     });
   });
 
@@ -189,7 +191,8 @@ describe('QuotePage', () => {
     expect(secondSignal).toBeDefined();
 
     await waitFor(() => {
-      expect(screen.getByRole('status')).toHaveTextContent(/USDC → EURC/);
+      const quoteStatus = screen.getAllByRole('status').find((el) => el.textContent?.includes('USDC'));
+      expect(quoteStatus).toHaveTextContent(/USDC → EURC/);
     });
   });
 
@@ -226,7 +229,8 @@ describe('QuotePage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole('status')).toHaveTextContent(/1\.00 XLM/);
+      const quoteStatus = screen.getAllByRole('status').find((el) => el.textContent?.includes('XLM'));
+      expect(quoteStatus).toHaveTextContent(/1\.00 XLM/);
     });
     expect(screen.getByText('1.00 XLM')).toHaveAttribute('title', '10000000');
     expect(screen.getByText('1,234')).toHaveAttribute('title', '1234');
@@ -407,7 +411,8 @@ describe('QuotePage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole('status')).toHaveTextContent(/USDC → EURC/);
+      const quoteStatus = screen.getAllByRole('status').find((el) => el.textContent?.includes('USDC'));
+      expect(quoteStatus).toHaveTextContent(/USDC → EURC/);
     });
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('source_asset=USDC&dest_asset=EURC&amount=100'),
