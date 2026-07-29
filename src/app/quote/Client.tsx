@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { TextField } from '@/components/TextField';
+import { SlippageView } from './Slippage';
 import { apiFetch, type ApiError } from '@/lib/apiClient';
 import { formatQuoteAmountDisplay, formatQuoteRateDisplay } from '@/lib/format';
 import { useLocalStorage } from '@/lib/useLocalStorage';
@@ -206,6 +207,13 @@ export default function QuoteClient() {
     }
   };
 
+  // Retry wrapper for the quote request – re‑uses the existing submission logic.
+  const retryQuote = useCallback(() => {
+    // Create a synthetic submit event to trigger the same validation & request flow.
+    // The event type is cast to any to satisfy the FormEvent generic.
+    onSubmit(new Event('submit') as any);
+  }, [onSubmit]);
+
   return (
     <main
       id="main-content"
@@ -269,7 +277,7 @@ export default function QuoteClient() {
         </button>
       </form>
 
-      {quote &&
+      {quote && (
         (() => {
           const amountFmt = formatQuoteAmountDisplay(quote.amount);
           const rateFmt = formatQuoteRateDisplay(quote.estimated_rate);
@@ -301,7 +309,17 @@ export default function QuoteClient() {
               </dl>
             </section>
           );
-        })()}
+        })()
+      )}
+      {/* Slippage status UI */}
+      <SlippageView
+        status={loading ? 'loading' : formError ? 'error' : quote ? 'success' : 'empty'}
+        slippage={
+          quote ? `${((quote.estimated_rate - 1) * 100).toFixed(2)}%` : undefined
+        }
+        errorMessage={formError ?? undefined}
+        onRetry={formError ? retryQuote : undefined}
+      />
       {formError && (
         <div role="alert" className="text-sm text-rose-700 dark:text-rose-400">
           <p>{formError}</p>
