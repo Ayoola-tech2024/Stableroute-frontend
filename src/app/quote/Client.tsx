@@ -7,15 +7,17 @@ import { formatQuoteAmountDisplay, formatQuoteRateDisplay } from '@/lib/format';
 import { useLocalStorage } from '@/lib/useLocalStorage';
 import type { Quote } from '@/lib/types';
 import { isQuote } from '@/lib/validate';
-import { QuoteHistory, type HistoryEntry, type QuoteInputs } from './QuoteHistory';
+import {
+  QuoteHistory,
+  type HistoryEntry,
+  type QuoteInputs,
+} from './QuoteHistory';
 
 type FieldErrors = {
   source?: string;
   dest?: string;
   amount?: string;
 };
-
-
 
 const INPUTS_KEY = 'stableroute.quote.inputs';
 const HISTORY_KEY = 'stableroute.quote.history';

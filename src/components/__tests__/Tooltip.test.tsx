@@ -17,7 +17,9 @@ describe('Tooltip', () => {
         <button>Hover me</button>
       </Tooltip>
     );
-    expect(screen.getByRole('button', { name: /hover me/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /hover me/i })
+    ).toBeInTheDocument();
   });
 
   it('renders the loading state', () => {

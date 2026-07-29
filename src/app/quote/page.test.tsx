@@ -682,12 +682,19 @@ describe('QuoteError segment boundary', () => {
       const historyItems = [
         { source: 'USDC', dest: 'EURC', amount: '2500000', savedAt: 1000 },
       ];
-      localStorage.setItem('stableroute.quote.history', JSON.stringify(historyItems));
+      localStorage.setItem(
+        'stableroute.quote.history',
+        JSON.stringify(historyItems)
+      );
 
       render(<QuotePage />);
 
-      expect(screen.getByRole('heading', { name: /Recent quotes/i })).toBeInTheDocument();
-      const historyButton = screen.getByRole('button', { name: /USDC → EURC · 2500000/i });
+      expect(
+        screen.getByRole('heading', { name: /Recent quotes/i })
+      ).toBeInTheDocument();
+      const historyButton = screen.getByRole('button', {
+        name: /USDC → EURC · 2500000/i,
+      });
       expect(historyButton).toBeInTheDocument();
 
       fireEvent.click(historyButton);
@@ -701,11 +708,16 @@ describe('QuoteError segment boundary', () => {
       const historyItems = [
         { source: 'USDC', dest: 'EURC', amount: '1000000', savedAt: 1000 },
       ];
-      localStorage.setItem('stableroute.quote.history', JSON.stringify(historyItems));
+      localStorage.setItem(
+        'stableroute.quote.history',
+        JSON.stringify(historyItems)
+      );
 
       render(<QuotePage />);
 
-      expect(screen.getByRole('button', { name: /USDC → EURC · 1000000/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /USDC → EURC · 1000000/i })
+      ).toBeInTheDocument();
 
       // Type in Source asset input
       fireEvent.change(getSourceInput(), { target: { value: 'XLM' } });
@@ -717,8 +729,9 @@ describe('QuoteError segment boundary', () => {
       fireEvent.change(getAmountInput(), { target: { value: '500' } });
 
       // Output remains unchanged
-      expect(screen.getByRole('button', { name: /USDC → EURC · 1000000/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /USDC → EURC · 1000000/i })
+      ).toBeInTheDocument();
     });
   });
 });
-
