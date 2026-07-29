@@ -676,4 +676,26 @@ describe('QuoteError segment boundary', () => {
       'digest-quote-1'
     );
   });
+
+  describe('Quote History Integration', () => {
+    it('reads history from localStorage and populates form fields when history entry is clicked', () => {
+      const historyItems = [
+        { source: 'USDC', dest: 'EURC', amount: '2500000', savedAt: 1000 },
+      ];
+      localStorage.setItem('stableroute.quote.history', JSON.stringify(historyItems));
+
+      render(<QuotePage />);
+
+      expect(screen.getByRole('heading', { name: /Recent quotes/i })).toBeInTheDocument();
+      const historyButton = screen.getByRole('button', { name: /USDC → EURC · 2500000/i });
+      expect(historyButton).toBeInTheDocument();
+
+      fireEvent.click(historyButton);
+
+      expect(getSourceInput()).toHaveValue('USDC');
+      expect(getDestinationInput()).toHaveValue('EURC');
+      expect(getAmountInput()).toHaveValue('2500000');
+    });
+  });
 });
+
