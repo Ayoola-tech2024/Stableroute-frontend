@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Badge } from '@/components/Badge';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { EmptyState } from '@/components/EmptyState';
@@ -44,6 +44,17 @@ export default function WebhooksClient() {
   const isEmpty = hooks.status === 'success' && hooks.data.length === 0;
   const hasData = hooks.status === 'success' && hooks.data.length > 0;
   const displayError = localError;
+
+  // Memoize the loaded webhook items so unrelated state changes (typing in the
+  // URL field, toggling the confirm dialog, or localError updates) do not cause
+  // the ResourceList rows to re-render. `hooks.data` is stable-by-reference
+  // between refetches, so this memo only recomputes when the list actually
+  // changes.
+  const webhookData = hooks.status === 'success' ? hooks.data : null;
+  const webhookItems = useMemo(
+    () => webhookData ?? [],
+    [webhookData]
+  );
 
   const toggleEvent = (event: string) => {
     setSelectedEvents((current) =>
@@ -160,7 +171,7 @@ export default function WebhooksClient() {
       )}
       {hasData && (
         <ResourceList
-          items={hooks.data}
+          items={webhookItems}
           loading={false}
           emptyMessage="No webhooks registered."
           getKey={(hook) => hook.id}
