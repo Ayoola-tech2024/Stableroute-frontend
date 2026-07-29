@@ -517,6 +517,94 @@ describe('QuotePage', () => {
     );
   });
 
+  it('announces form submission status via a polite live region', async () => {
+    let resolveRequest: ((value: Response) => void) | undefined;
+    const pendingResponse = new Promise<Response>((resolve) => {
+      resolveRequest = resolve;
+    });
+
+    const mockFetch = jest
+      .fn()
+      .mockImplementationOnce(() => pendingResponse);
+    globalThis.fetch = mockFetch as unknown as typeof globalThis.fetch;
+
+    render(<QuotePage />);
+    fireEvent.change(getSourceInput(), {
+      target: { value: 'USDC' },
+    });
+    fireEvent.change(getDestinationInput(), {
+      target: { value: 'EURC' },
+    });
+    fireEvent.change(getAmountInput(), {
+      target: { value: '100' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
+
+    // The sr-only live region should announce the in-progress status
+    const liveAnnouncement = document.querySelector(
+      '[aria-live=polite].sr-only'
+    );
+    expect(liveAnnouncement).toHaveTextContent('Requesting quote…');
+
+    resolveRequest?.({
+      ok: true,
+      text: async () =>
+        JSON.stringify({
+          source_asset: 'USDC',
+          dest_asset: 'EURC',
+          amount: '100',
+          estimated_rate: '1.0',
+          route: ['USDC', 'EURC'],
+        }),
+    } as unknown as Response);
+
+    await waitFor(() => {
+      expect(liveAnnouncement).toHaveTextContent('Quote received.');
+    });
+  });
+
+  it('clears the sr-only announcement when the request fails', async () => {
+    const mockFetch = jest.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      text: async () =>
+        JSON.stringify({
+          error: 'server_error',
+          message: 'Internal server error',
+        }),
+    } as unknown as Response);
+    globalThis.fetch = mockFetch as unknown as typeof globalThis.fetch;
+
+    render(<QuotePage />);
+    fireEvent.change(getSourceInput(), {
+      target: { value: 'USDC' },
+    });
+    fireEvent.change(getDestinationInput(), {
+      target: { value: 'EURC' },
+    });
+    fireEvent.change(getAmountInput(), {
+      target: { value: '100' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+
+    const liveAnnouncement = document.querySelector(
+      '[aria-live=polite].sr-only'
+    );
+    expect(liveAnnouncement).toHaveTextContent('');
+  });
+
+  it('does not announce form status on initial render', () => {
+    render(<QuotePage />);
+    const liveAnnouncement = document.querySelector(
+      '[aria-live=polite].sr-only'
+    );
+    expect(liveAnnouncement).toHaveTextContent('');
+  });
+
   it('omits the requestId line when the backend does not include one', async () => {
     globalThis.fetch = jest.fn().mockResolvedValueOnce({
       ok: false,

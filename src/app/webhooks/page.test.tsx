@@ -67,6 +67,100 @@ describe('WebhooksPage', () => {
   });
 
   // -------------------------------------------------------------------------
+  // FORM ANNOUNCEMENT
+  // -------------------------------------------------------------------------
+
+  it('announces form submission status inside the polite live region', async () => {
+    let resolvePost: ((value: Response) => void) | undefined;
+    const pendingResponse = new Promise<Response>((resolve) => {
+      resolvePost = resolve;
+    });
+
+    const fetchMock = jest.fn();
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      text: () => Promise.resolve(JSON.stringify({ items: [] })),
+    } as unknown as Response);
+    fetchMock.mockImplementationOnce(
+      () => pendingResponse
+    ) as unknown as typeof global.fetch;
+    global.fetch = fetchMock as unknown as typeof global.fetch;
+
+    render(<WebhooksPage />);
+    await waitFor(() => screen.getByText(/No webhooks registered/i));
+
+    fireEvent.change(screen.getByLabelText(/URL/i), {
+      target: { value: 'https://example.com/hook' },
+    });
+    fireEvent.submit(screen.getByLabelText(/URL/i).closest('form')!);
+    await waitFor(() => screen.getByRole('dialog'));
+    fireEvent.click(screen.getByRole('button', { name: /^confirm$/i }));
+
+    const liveRegion = document.querySelector('[aria-live=polite]');
+    expect(liveRegion).toHaveTextContent('Registering webhook…');
+
+    resolvePost?.({
+      ok: true,
+      status: 201,
+      text: () => Promise.resolve('{}'),
+    });
+
+    await waitFor(() => {
+      expect(liveRegion).toHaveTextContent('Webhook registered.');
+    });
+  });
+
+  it('clears the form announcement on registration failure', async () => {
+    const fetchMock = jest.fn();
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      text: () => Promise.resolve(JSON.stringify({ items: [] })),
+    } as unknown as Response);
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 422,
+      text: () =>
+        Promise.resolve(
+          JSON.stringify({
+            error: 'validation_error',
+            message: 'Invalid URL',
+          })
+        ),
+    } as unknown as Response);
+    global.fetch = fetchMock as unknown as typeof global.fetch;
+
+    render(<WebhooksPage />);
+    await waitFor(() => screen.getByText(/No webhooks registered/i));
+
+    fireEvent.change(screen.getByLabelText(/URL/i), {
+      target: { value: 'https://example.com/hook' },
+    });
+    fireEvent.submit(screen.getByLabelText(/URL/i).closest('form')!);
+    await waitFor(() => screen.getByRole('dialog'));
+    fireEvent.click(screen.getByRole('button', { name: /^confirm$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/Invalid URL/i);
+    });
+
+    const liveRegion = document.querySelector('[aria-live=polite]');
+    expect(liveRegion).not.toHaveTextContent('Registering webhook');
+    expect(liveRegion).not.toHaveTextContent('Webhook registered');
+  });
+
+  it('does not announce form status on initial render', async () => {
+    mockFetchSequence({ ok: true, body: { items: [] } });
+    render(<WebhooksPage />);
+    await waitFor(() => screen.getByText(/No webhooks registered/i));
+
+    const liveRegion = document.querySelector('[aria-live=polite]');
+    expect(liveRegion).not.toHaveTextContent('Registering');
+    expect(liveRegion).not.toHaveTextContent('Webhook registered');
+  });
+
+  // -------------------------------------------------------------------------
   // LIST / RENDER
   // -------------------------------------------------------------------------
 

@@ -227,6 +227,93 @@ describe('ApiKeysPage', () => {
     expect(screen.getAllByText(/Key/i).length).toBeGreaterThanOrEqual(1);
   });
 
+  describe('form announcement', () => {
+    it('announces form submission status inside the polite live region', async () => {
+      let resolvePost: ((value: Response) => void) | undefined;
+      const pendingResponse = new Promise<Response>((resolve) => {
+        resolvePost = resolve;
+      });
+
+      global.fetch = jest
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          text: async () => JSON.stringify({ items: [] }),
+        } as unknown as Response)
+        .mockImplementationOnce(
+          () => pendingResponse
+        ) as unknown as typeof global.fetch;
+
+      renderPage();
+      await waitFor(() => screen.getByText(/No API keys yet/i));
+
+      fireEvent.change(screen.getByLabelText('Label'), {
+        target: { value: 'My key' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+      const liveRegion = document.querySelector('[aria-live=polite]');
+      expect(liveRegion).toHaveTextContent('Creating API key…');
+
+      resolvePost?.({
+        ok: true,
+        text: async () =>
+          JSON.stringify({ key: 'sk_test123', prefix: 'sk_test' }),
+      } as unknown as Response);
+
+      // After success, the live region should contain the success announcement
+      await waitFor(() => {
+        expect(liveRegion).toHaveTextContent('API key created. Copy it now.');
+      });
+    });
+
+    it('clears the form announcement on creation failure', async () => {
+      global.fetch = jest
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          text: async () => JSON.stringify({ items: [] }),
+        } as unknown as Response)
+        .mockRejectedValueOnce(
+          new Error('Network error')
+        ) as unknown as typeof global.fetch;
+
+      renderPage();
+      await waitFor(() => screen.getByText(/No API keys yet/i));
+
+      fireEvent.change(screen.getByLabelText('Label'), {
+        target: { value: 'My key' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+      // After the POST fails, the catch block clears the announcement.
+      // The button re-enables once submitting is false.
+      await waitFor(() => {
+        expect(
+          screen.getByRole('button', { name: 'Create' })
+        ).not.toBeDisabled();
+      });
+
+      const liveRegion = document.querySelector('[aria-live=polite]');
+      expect(liveRegion).not.toHaveTextContent('Creating API key…');
+      expect(liveRegion).not.toHaveTextContent('API key created.');
+    });
+
+    it('does not announce form status on initial render', async () => {
+      global.fetch = jest.fn().mockResolvedValueOnce({
+        ok: true,
+        text: async () => JSON.stringify({ items: [] }),
+      } as unknown as Response);
+
+      renderPage();
+      await waitFor(() => screen.getByText(/No API keys yet/i));
+
+      const liveRegion = document.querySelector('[aria-live=polite]');
+      expect(liveRegion).not.toHaveTextContent('Creating');
+      expect(liveRegion).not.toHaveTextContent('API key created');
+    });
+  });
+
   describe('clipboard guard', () => {
     function mockCreateFlow() {
       global.fetch = jest

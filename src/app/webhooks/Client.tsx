@@ -8,6 +8,7 @@ import { ResourceList } from '@/components/ResourceList';
 import { TextField } from '@/components/TextField';
 import { TimeAgo } from '@/components/TimeAgo';
 import { apiDelete, apiGet, apiPost } from '@/lib/apiClient';
+import { useFormAnnouncement } from '@/lib/useFormAnnouncement';
 import { useList } from '@/lib/useList';
 import { WEBHOOK_EVENT_OPTIONS } from '@/lib/webhookEvents';
 import type { Webhook } from '@/lib/types';
@@ -37,6 +38,7 @@ export default function WebhooksClient() {
   const [submitting, setSubmitting] = useState(false);
   const [confirmRegister, setConfirmRegister] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const { message: formStatus, announce } = useFormAnnouncement();
 
   const items = hooks.status === 'success' ? hooks.data : null;
   const loading = hooks.status === 'idle' || hooks.status === 'loading';
@@ -62,12 +64,15 @@ export default function WebhooksClient() {
     }
     setLocalError(null);
     setSubmitting(true);
+    announce('Registering webhook…');
     try {
       await apiPost('/api/v1/webhooks', { url, events: selectedEvents });
       setUrl('');
+      announce('Webhook registered.');
       await hooks.refetch();
     } catch (err) {
       setLocalError((err as Error).message);
+      announce('');
     } finally {
       setSubmitting(false);
     }
@@ -128,6 +133,7 @@ export default function WebhooksClient() {
         loading={loading}
         emptyMessage="No webhooks registered."
         getKey={(hook) => hook.id}
+        announcement={formStatus || undefined}
         caption="Registered webhooks"
         tableHeaders={['URL', 'Events', 'Registered', 'Actions']}
         renderRow={(hook, { requestRemove }) => (
