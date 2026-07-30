@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useRouter } from 'next/navigation';
 import { CommandPalette } from '../CommandPalette';
 import { ROUTES } from '@/lib/routes';
@@ -503,6 +503,119 @@ describe('CommandPalette', () => {
       });
       const options = screen.getAllByRole('option');
       expect(options[0]).toHaveClass('hover:bg-neutral-100');
+    });
+  });
+
+  describe('Live Region Announcements', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('renders a polite live region with aria-atomic', async () => {
+      render(<CommandPalette />);
+      fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+      });
+
+      const liveRegion = screen.getByText('', { selector: '.sr-only' });
+      expect(liveRegion).toHaveAttribute('aria-live', 'polite');
+      expect(liveRegion).toHaveAttribute('aria-atomic', 'true');
+    });
+
+    it('announces result count when matches are found', async () => {
+      render(<CommandPalette />);
+      fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+      });
+
+      const input = screen.getByPlaceholderText('Jump to…');
+      await act(async () => {
+        fireEvent.change(input, { target: { value: 'pairs' } });
+        jest.advanceTimersByTime(300);
+      });
+
+      expect(screen.getByText(/1 result found/i)).toBeInTheDocument();
+    });
+
+    it('announces plural result count when multiple matches', async () => {
+      render(<CommandPalette />);
+      fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+      });
+
+      const input = screen.getByPlaceholderText('Jump to…');
+      await act(async () => {
+        fireEvent.change(input, { target: { value: 'a' } });
+        jest.advanceTimersByTime(300);
+      });
+
+      expect(screen.getByText(/results found/i)).toBeInTheDocument();
+    });
+
+    it('announces "No results found" when no matches', async () => {
+      render(<CommandPalette />);
+      fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+      });
+
+      const input = screen.getByPlaceholderText('Jump to…');
+      await act(async () => {
+        fireEvent.change(input, { target: { value: 'zzzzzzz' } });
+        jest.advanceTimersByTime(300);
+      });
+
+      expect(screen.getByText('No results found')).toBeInTheDocument();
+    });
+
+    it('does not announce when query is empty', () => {
+      render(<CommandPalette />);
+      fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
+
+      const liveRegion = screen.getByText('', { selector: '.sr-only' });
+      expect(liveRegion).toBeEmptyDOMElement();
+    });
+
+    it('debounces rapid updates and announces only the final message', async () => {
+      render(<CommandPalette />);
+      fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+      });
+
+      const input = screen.getByPlaceholderText('Jump to…');
+      await act(async () => {
+        fireEvent.change(input, { target: { value: 'x' } });
+        fireEvent.change(input, { target: { value: 'xy' } });
+        fireEvent.change(input, { target: { value: 'xyz' } });
+        jest.advanceTimersByTime(300);
+      });
+
+      expect(screen.getByText('No results found')).toBeInTheDocument();
+    });
+
+    it('clears announcement timer on unmount', async () => {
+      const clearTimeoutSpy = jest.spyOn(window, 'clearTimeout');
+      const { unmount } = render(<CommandPalette />);
+      fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+      });
+
+      const input = screen.getByPlaceholderText('Jump to…');
+      fireEvent.change(input, { target: { value: 'pairs' } });
+
+      // The debounce timeout is now scheduled; unmount should clear it
+      unmount();
+      expect(clearTimeoutSpy).toHaveBeenCalled();
+      clearTimeoutSpy.mockRestore();
     });
   });
 
