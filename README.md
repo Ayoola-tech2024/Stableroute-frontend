@@ -57,6 +57,8 @@ Reusable building blocks live under `src/components` and are imported by route p
 | [`ToastProvider`](src/components/ToastProvider.tsx)                 | App-wide toast notifications                                           |
 | [`KeyboardShortcutsHelp`](src/components/KeyboardShortcutsHelp.tsx) | `?` overlay listing keyboard shortcuts                                 |
 | [`CommandPalette`](src/components/CommandPalette.tsx)               | `Cmd/Ctrl+K` route jump palette                                        |
+| [`Tooltip`](src/components/Tooltip.tsx)                             | Status surface with loading/empty/error/success states (see [tooltips.md](docs/tooltips.md)) |
+| [`QuoteHistory`](src/app/quote/QuoteHistory.tsx)                   | Recent quote history list with selection callback and memoization (see [history.md](docs/history.md)) |
 
 Data fetching helpers (`apiClient`, `useApi`, `useList`) live in `src/lib`.
 
@@ -72,7 +74,7 @@ The frontend communicates with the StableRoute API backend.
 
 The shared API client (`src/lib/apiClient.ts`) exposes `apiFetch`, `apiGet`, `apiPost`, `apiPatch`, and `apiDelete`. All calls return a promise that resolves to the parsed JSON body (or `undefined` on `204`) and rejects with an `Error` on failure.
 
-Rejected errors are guaranteed to carry a `status` property (`number`) and, when the server returns a parseable JSON error body matching the `ApiError` shape, the `error` and `requestId` properties from the response. When the response is non-OK and the body is empty or not valid JSON, the client synthesises an `ApiError`-shaped error:
+Every request sends a client-generated correlation id via the `X-Request-Id` header. Rejected errors are guaranteed to carry a `status` property (`number`) on HTTP failures and a `requestId` for support correlation (from the response body when present, otherwise the client-generated id). When the server returns a parseable JSON error body matching the `ApiError` shape, the `error` property is also attached. When the response is non-OK and the body is empty or not valid JSON, the client synthesises an `ApiError`-shaped error:
 
 | Property  | Value                             |
 | --------- | --------------------------------- |
@@ -171,6 +173,8 @@ The client reads this value in [`src/lib/apiClient.ts`](src/lib/apiClient.ts). R
 
 ### Troubleshooting
 
+For a focused guide covering misconfigured API bases, CORS failures, timeouts, and 401/403 responses, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
+
 | Symptom                              | Fix                                                                     |
 | ------------------------------------ | ----------------------------------------------------------------------- |
 | API calls fail with `ECONNREFUSED`   | Start the StableRoute backend or set `NEXT_PUBLIC_STABLEROUTE_API_BASE` |
@@ -189,6 +193,8 @@ The client reads this value in [`src/lib/apiClient.ts`](src/lib/apiClient.ts). R
 | `npm run lint`       | Next.js ESLint             |
 
 ## Accessibility
+
+StableRoute aims for **WCAG 2.1 Level AA** compliance. For full details on our target conformance level, tested assistive-technology and browser matrix, built-in accessibility features, feedback channel, and known-gaps register, see our official [Accessibility Conformance Statement](docs/ACCESSIBILITY.md).
 
 ### Reduced Motion (Issue #309)
 

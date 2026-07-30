@@ -15,7 +15,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
@@ -23,6 +23,36 @@ jobs:
 
       - name: Run ESLint
         run: npm run lint
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    # scan:secrets:ci diffs against the PR base ref. On push to main there
+    # is no diff to scan (HEAD equals the base ref), so we skip the job —
+    # pushes to main are protected by branch-protection / branch-up-to-date
+    # rules and there is nothing new to verify.
+    if: github.event_name == 'pull_request'
+    # Full git history so the diff against the base branch has something
+    # to compare against. `actions/checkout` defaults to fetch-depth: 1
+    # which would make `git diff origin/main...HEAD` empty on shallow clones.
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Scan PR diff for secrets
+        env:
+          BASE_REF: origin/${{ github.event.pull_request.base.ref || 'main' }}
+        run: npm run scan:secrets:ci
 
   build-test:
     name: Build & Test
@@ -33,7 +63,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies

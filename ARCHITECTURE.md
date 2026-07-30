@@ -8,6 +8,7 @@
 - `src/lib/config.ts` — API base resolution and validation.
 - `src/lib/useApi.ts` / `src/lib/useList.ts` — client data-loading helpers.
 - `src/lib/clipboard.ts` — secure-context/permission-guarded clipboard writes (see `docs/clipboard.md`).
+- `src/lib/endpointRegistry.ts` — typed registry of API endpoints for the docs page.
 - `src/lib/routes.ts` — the app's route table. Each entry carries a `group`
   ("Routing" | "Operations" | "Reference"); `getRoutesByGroup()` returns
   routes grouped for `Header` and `CommandPalette`, preserving both the
@@ -16,12 +17,26 @@
   `role="presentation"` separator so arrow-key navigation only ever lands
   on an actual result, never the heading.
 
+## Static Route Prerendering
+
+Pure informational routes (`src/app/about/page.tsx` and `src/app/docs/page.tsx`) export `dynamic = 'force-static'` so Next.js statically prerenders them to HTML at build time.
+
+- Any interactive or runtime environment-dependent elements on static pages (such as dynamic API base link resolution) are isolated into small dedicated client components (`src/app/docs/OpenApiLink.tsx`).
+- This ensures page shells stay fully server-rendered static HTML without re-evaluating page routes per request.
+
 ## Error handling
 
 Errors are contained at the narrowest boundary that can recover them:
 
 - `src/app/error.tsx` — root boundary, the last resort for errors no
   segment handles.
+- `src/app/global-error.tsx` — outermost safety net for root layout
+  failures. Renders its own `<html>/<body>` shell since the layout
+  is unavailable. Imports `globals.css` directly for Tailwind support
+  (relies on Next.js ≥15.0.3 CSS-import-in-global-error support;
+  inline styles are a deliberate fallback for versions where this
+  doesn't hold). Contains `GlobalErrorContent` (internal, testable)
+  wrapped in the required document shell.
 - `src/app/quote/error.tsx`, `src/app/events/error.tsx` — segment-level
   boundaries. A crash inside `QuoteClient` or `EventsClient` (render or
   effect) is caught at the segment, so the root layout — skip link,
@@ -78,6 +93,13 @@ Errors are contained at the narrowest boundary that can recover them:
 
 - `src/app/error.tsx` — root boundary, the last resort for errors no
   segment handles.
+- `src/app/global-error.tsx` — outermost safety net for root layout
+  failures. Renders its own `<html>/<body>` shell since the layout
+  is unavailable. Imports `globals.css` directly for Tailwind support
+  (relies on Next.js ≥15.0.3 CSS-import-in-global-error support;
+  inline styles are a deliberate fallback for versions where this
+  doesn't hold). Contains `GlobalErrorContent` (internal, testable)
+  wrapped in the required document shell.
 - `src/app/quote/error.tsx`, `src/app/events/error.tsx` — segment-level
   boundaries. A crash inside `QuoteClient` or `EventsClient` (render or
   effect) is caught at the segment, so the root layout — skip link,

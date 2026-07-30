@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import React, { memo, useCallback, useState, useRef } from 'react';
 import { IconButton } from '@/components/IconButton';
 import { ResourceList } from '@/components/ResourceList';
 import { TextField } from '@/components/TextField';
@@ -8,16 +8,21 @@ import { TimeAgo } from '@/components/TimeAgo';
 import { Badge } from '@/components/Badge';
 import { Tooltip } from '@/components/Tooltip';
 import { apiDelete, apiGet, apiPost } from '@/lib/apiClient';
+import { useFormAnnouncement } from '@/lib/useFormAnnouncement';
 import { useList } from '@/lib/useList';
 import { writeToClipboard } from '@/lib/clipboard';
 import { useToast } from '@/components/ToastProvider';
+import type { ApiKey, CreateApiKeyResponse } from '@/lib/types';
+import { isApiKeyListResponse, isCreateApiKeyResponse } from '@/lib/validate';
 
-type Item = { prefix: string; label: string; createdAt: number };
-
-export default function ApiKeysClient() {
+function ApiKeysClient() {
+  const renderCount = useRef(0);
+  renderCount.current++;
   const loadItems = useCallback(
     () =>
-      apiGet<{ items: Item[] }>('/api/v1/api-keys').then((body) => body.items),
+      apiGet<{ items: ApiKey[] }>('/api/v1/api-keys', {
+        validate: isApiKeyListResponse,
+      }).then((body) => body.items),
     []
   );
   const itemsResult = useList(loadItems);
@@ -28,6 +33,7 @@ export default function ApiKeysClient() {
   const [recentPrefix, setRecentPrefix] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
+  const { message: formStatus, announce } = useFormAnnouncement();
   const { push } = useToast();
   const items = itemsResult.status === 'success' ? itemsResult.data : null;
   const loading =
@@ -36,17 +42,21 @@ export default function ApiKeysClient() {
   const onCreate = async (event: React.FormEvent) => {
     event.preventDefault();
     setSubmitting(true);
+    announce('Creating API key…');
     try {
-      const response = await apiPost<{ key: string; prefix?: string }>(
+      const response = await apiPost<CreateApiKeyResponse>(
         '/api/v1/api-keys',
-        { label }
+        { label },
+        { validate: isCreateApiKeyResponse }
       );
       setCreated(response.key);
       setCopyFailed(false);
       setRecentPrefix(response.prefix ?? response.key.slice(0, 8));
       setLabel('');
+      announce('API key created. Copy it now.');
       await itemsResult.refetch();
     } catch (err) {
+      announce('');
       /* surfaced via useList error if refetch fails; keep form local */
     } finally {
       setSubmitting(false);
@@ -143,6 +153,7 @@ export default function ApiKeysClient() {
         loading={loading}
         emptyMessage="No API keys yet."
         getKey={(key) => key.prefix}
+        announcement={formStatus || undefined}
         rowClassName="flex items-center justify-between py-3"
         removeDialogTitle="Revoke API key?"
         removeDialogConfirmLabel="Revoke"
@@ -180,3 +191,4 @@ export default function ApiKeysClient() {
     </main>
   );
 }
+export default memo(ApiKeysClient);

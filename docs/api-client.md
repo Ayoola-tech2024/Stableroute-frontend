@@ -7,6 +7,74 @@ The shared HTTP client lives in `src/lib/apiClient.ts`.
 Requests are sent to `${getApiBase()}${path}` where `getApiBase()` reads
 `NEXT_PUBLIC_STABLEROUTE_API_BASE` (see `src/lib/config.ts`).
 
+## API Response Types
+
+All API response type definitions are centralized in `src/lib/types.ts` to
+maintain a single source of truth and prevent type drift between pages.
+
+### Available Types
+
+- **`Pair`** — Routing pair response: `{ source, destination }`
+- **`Quote`** — Quote response: `{ source_asset, dest_asset, amount, estimated_rate, route[] }`
+- **`AppEvent`** — Raw event from API: `{ id, ts, type, payload }`
+- **`DisplayEvent`** — Rendered event with serialized payloads: `{ id, ts, type, payloadPreview, fullPayload }`
+- **`ApiKey`** — API key metadata: `{ prefix, label, createdAt }`
+- **`CreateApiKeyResponse`** — API key creation response: `{ key, prefix? }`
+- **`Webhook`** — Webhook subscription: `{ id, url, events[], createdAt }`
+
+### Importing Types
+
+Types are exported directly from `src/lib/types.ts`:
+
+```ts
+import type { Quote, Pair, ApiKey } from '@/lib/types';
+```
+
+For backward compatibility, types are also re-exported from their validation/utility modules:
+
+```ts
+// Both work:
+import type { Quote } from '@/lib/types';
+import type { Quote } from '@/lib/quote';
+
+// Both work:
+import type { AppEvent, DisplayEvent } from '@/lib/types';
+import type { AppEvent, DisplayEvent } from '@/lib/events';
+
+// Both work:
+import type { Pair } from '@/lib/types';
+import { type Pair } from '@/app/pairs/pairsUtils';
+```
+
+### Validation Functions
+
+Validation logic remains in their respective modules:
+
+- `quote.ts` — `isValidAmount()`, `assetsDiffer()`, `normalizeAsset()`
+- `events.ts` — `parseEventsResponse()`, `escapeCsvCell()`, `buildEventsCsv()`
+- `webhookEvents.ts` — `isWebhookEventType()`
+
+These validators continue to use the centralized types, ensuring all validation is type-safe and consistent.
+
+## Request correlation (`X-Request-Id`)
+
+Every `apiFetch` call generates a collision-resistant id (`createRequestId()`,
+UUID v4 via `crypto.randomUUID` with a no-dependency fallback) and sends it as
+the `X-Request-Id` header. The same id is reused across retry attempts for one
+logical call so backend logs stay correlated.
+
+On failure, that id is attached to the thrown `Error` as `requestId` when the
+response body does not already include one (network/timeout errors always get
+the client-generated id). UI error surfaces already render `error.requestId`
+for support.
+
+```ts
+import { REQUEST_ID_HEADER, createRequestId } from '@/lib/apiClient';
+
+// Header name constant — do not hardcode in callers.
+REQUEST_ID_HEADER; // 'X-Request-Id'
+```
+
 ## Error shape
 
 Failed responses parse JSON bodies matching:
@@ -63,12 +131,14 @@ Output: "Unauthorized: [redacted]"
 The `requestId` field from the API response body is attached directly to the
 thrown `Error` **object** — not embedded in the message string — so support
 teams can still correlate failures without the message leaking sensitive data.
+When the body omits `requestId`, the client-generated id from `X-Request-Id`
+is used instead.
 
 ```ts
 // Accessing requestId in a catch block:
 const err = await apiFetch('/api/v1/quote?...').catch((e) => e);
 console.log(err.message); // sanitized, safe to show in a toast
-console.log(err.requestId); // original, safe for support correlation
+console.log(err.requestId); // server or client id, safe for support correlation
 ```
 
 ## Auth error handler
@@ -86,7 +156,114 @@ handler shows a toast and the request still rejects so callers can react.
 | `apiPatch`  | PATCH  | JSON body             |
 | `apiDelete` | DELETE | 204 → `undefined`     |
 
+## Webhook Test Delivery
+
+The webhooks page adds a per-row "Test" button that sends a test delivery to a
+registered endpoint via `POST /api/v1/webhooks/:id/test`.
+
+The response shape is:
+
+```ts
+type TestDeliveryResult = {
+  statusCode: number;
+  ok: boolean;
+};
+```
+
+On success the row displays the status code inline (e.g. `OK (200)`). On failure
+it shows `Failed (<statusCode>)`. The control is disabled while a test is
+in-flight.
+
 ## Timeouts
 
 Default timeout is 15s (`timeoutMs` option). Abort errors surface as
 `Request timed out`; network failures as `Network request failed`.
+
+## Runtime Validation
+
+`apiClient.ts` casts parsed JSON directly to the caller's generic type. To
+catch malformed or hostile responses **before** they reach React, pass a
+`validate` option — a runtime type guard — on any fetch call.
+
+### How it works
+
+```ts
+import { apiGet } from '@/lib/apiClient';
+import { isWebhookListResponse } from '@/lib/validate';
+
+const body = await apiGet<{ items: Webhook[] }>('/api/v1/webhooks', {
+  validate: isWebhookListResponse,
+});
+// body is guaranteed to match the Webhook[] shape at runtime.
+```
+
+If validation fails, a `ValidationError` is thrown (see below) and the
+response never reaches the caller.
+
+### With `useApi`
+
+```ts
+import { useApi } from '@/lib/useApi';
+import { isStats } from '@/lib/validate';
+
+const result = useApi<Stats>('/api/v1/stats', isStats);
+// result.data is validated before state is set.
+```
+
+### With `apiPost` / `apiPatch`
+
+```ts
+import { apiPost } from '@/lib/apiClient';
+import { isCreateApiKeyResponse } from '@/lib/validate';
+
+const created = await apiPost<CreateApiKeyResponse>(
+  '/api/v1/api-keys',
+  { label: 'Prod' },
+  { validate: isCreateApiKeyResponse }
+);
+```
+
+### Available validators
+
+All validators live in `src/lib/validate.ts`. Each is a pure function with
+no external dependencies.
+
+| Guard                    | Validates                                                       |
+| ------------------------ | --------------------------------------------------------------- |
+| `isPair`                 | `{ source: string; destination: string }`                       |
+| `isQuote`                | `{ source_asset, dest_asset, amount, estimated_rate, route[] }` |
+| `isApiKey`               | `{ prefix: string; label: string; createdAt: number }`          |
+| `isCreateApiKeyResponse` | `{ key: string; prefix?: string }`                              |
+| `isWebhook`              | `{ id, url, events (valid event types), createdAt }`            |
+| `isRouterStatus`         | `{ paused: boolean }`                                           |
+| `isStats`                | `{ totalPairs: number; paused: boolean }`                       |
+| `isPairsResponse`        | `{ pairs: Pair[] }`                                             |
+| `isApiKeyListResponse`   | `{ items: ApiKey[] }`                                           |
+| `isWebhookListResponse`  | `{ items: Webhook[] }`                                          |
+
+Each guard also has a `parse*` counterpart that throws `ValidationError`
+with structural metadata (field path, expected type, received type) rather
+than the raw value — preventing sensitive data from leaking into logs.
+
+### ValidationError
+
+```ts
+class ValidationError extends Error {
+  code: 'VALIDATION_ERROR';
+  field: string; // e.g. "root", "events[2].type", "key"
+  expected: string; // e.g. "string", "boolean", "webhook_event_type"
+  received: string; // type description only — never the raw value
+}
+```
+
+`ValidationError` carries only structural metadata. Sensitive fields (e.g.
+API key secrets) are never attached to the error object, regardless of which
+field failed validation. The `received` field is produced by an internal
+`describeType()` helper that returns type names (`"string"`, `"object"`,
+`"array"`, etc.), never stringified values.
+
+### Opt-in design
+
+Validation is **opt-in**. Resources not yet wired to a validator (e.g. the
+health probe on the status page) continue to work unchanged. Add `validate`
+incrementally to the endpoints that benefit most from it first.
