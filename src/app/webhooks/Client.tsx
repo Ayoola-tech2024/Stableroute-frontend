@@ -9,6 +9,7 @@ import { ResourceList } from '@/components/ResourceList';
 import { TextField } from '@/components/TextField';
 import { TimeAgo } from '@/components/TimeAgo';
 import { apiDelete, apiGet, apiPost } from '@/lib/apiClient';
+import { useFormAnnouncement } from '@/lib/useFormAnnouncement';
 import { useList } from '@/lib/useList';
 import { WEBHOOK_EVENT_OPTIONS } from '@/lib/webhookEvents';
 import type { TestDeliveryResult, Webhook } from '@/lib/types';
@@ -38,6 +39,7 @@ export default function WebhooksClient() {
   const [submitting, setSubmitting] = useState(false);
   const [confirmRegister, setConfirmRegister] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const { message: formStatus, announce } = useFormAnnouncement();
 
   const [testResults, setTestResults] = useState<
     Record<
@@ -90,12 +92,15 @@ export default function WebhooksClient() {
     }
     setLocalError(null);
     setSubmitting(true);
+    announce('Registering webhook…');
     try {
       await apiPost('/api/v1/webhooks', { url, events: selectedEvents });
       setUrl('');
+      announce('Webhook registered.');
       await hooks.refetch();
     } catch (err) {
       setLocalError((err as Error).message);
+      announce('');
     } finally {
       setSubmitting(false);
     }
@@ -151,16 +156,20 @@ export default function WebhooksClient() {
           </p>
         )}
       </form>
-      {!hasData && (
-        <div aria-live="polite" aria-atomic="true" aria-busy={isLoading}>
-          {isLoading && <p>Loading…</p>}
-          {isError && (
-            <div
-              role="alert"
-              className="rounded-lg border border-rose-200 bg-rose-50 p-6 text-center dark:border-rose-800 dark:bg-rose-950"
-            >
-              <p className="text-sm font-medium text-rose-700 dark:text-rose-300">
-                Failed to load webhooks
+      <ResourceList
+        items={items}
+        loading={loading}
+        emptyMessage="No webhooks registered."
+        getKey={(hook) => hook.id}
+        announcement={formStatus || undefined}
+        caption="Registered webhooks"
+        tableHeaders={['URL', 'Events', 'Registered', 'Actions']}
+        renderRow={(hook, { requestRemove }) => (
+          <>
+            <div>
+              <p className="break-all text-sm font-medium">{hook.url}</p>
+              <p className="text-xs text-neutral-500">
+                Registered <TimeAgo ts={hook.createdAt} />
               </p>
               <p className="mt-1 text-sm text-rose-600 dark:text-rose-400">
                 {hooks.error}
