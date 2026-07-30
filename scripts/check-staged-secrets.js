@@ -188,7 +188,8 @@ const PATTERN_DEFINITIONS = [
   },
   {
     id: 'generic-secret-assignment',
-    description: 'High-entropy assignment: KEY = "<long opaque blob>"',
+    description:
+      'High-entropy assignment: KEY = "<long opaque blob>"', // stableroute-disable-line secret-scan
     assignmentOnly: true,
     regex:
       /\b(?:api[_-]?key|apikey|secret|token|password|passwd|auth|credentials?|private[_-]?key|access[_-]?key|client[_-]?secret|webhook[_-]?secret|signing[_-]?key)\b["']?\s*[:=]\s*["']?([A-Za-z0-9_\-+/=]{20,})["']?/i,
@@ -309,7 +310,7 @@ function extractAssignmentValue(line) {
 
   let rhs = line.slice(opIdx + 1).trim();
   rhs = rhs.replace(/\s+#.*$/, '');
-  rhs = rhs.replace(/^["']+/, '').replace(/["']+$/, '');
+  rhs = rhs.replace(/^["']+/, '').replace(/["']+$/, ''); // stableroute-disable-line secret-scan
   rhs = rhs.replace(/[;,}\]]+\s*$/, '').trim();
   return rhs.length > 0 ? rhs : null;
 }

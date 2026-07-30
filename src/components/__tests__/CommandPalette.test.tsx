@@ -476,42 +476,48 @@ describe('CommandPalette', () => {
       });
     });
 
-    it('renders distinct error state with role=alert when error prop is provided', async () => {
-      render(<CommandPalette error="Failed to fetch route index" />);
-      fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
-      await waitFor(() => {
-        const alert = screen.getByRole('alert');
-        expect(alert).toBeInTheDocument();
-        expect(screen.getByText('Search failed')).toBeInTheDocument();
-        expect(
-          screen.getByText('Failed to fetch route index')
-        ).toBeInTheDocument();
-      });
+    it(
+      'renders distinct error state with role=alert when error prop is provided',
+      async () => {
+        render(<CommandPalette error="Failed to fetch route index" />);
+        fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
+        await waitFor(() => {
+          const alert = screen.getByRole('alert');
+          expect(alert).toBeInTheDocument();
+          expect(screen.getByText('Search failed')).toBeInTheDocument();
+          expect(
+            screen.getByText('Failed to fetch route index')
+          ).toBeInTheDocument();
+        });
 
-      const input = screen.getByRole('combobox');
-      expect(input).toHaveAttribute('aria-invalid', 'true');
-      expect(input).toHaveAttribute(
-        'aria-describedby',
-        'command-palette-error-message'
-      );
-    });
+        const input = screen.getByRole('combobox');
+        expect(input).toHaveAttribute('aria-invalid', 'true');
+        expect(input).toHaveAttribute(
+          'aria-describedby',
+          'command-palette-error-message'
+        );
+      }
+    );
 
-    it('renders retry button and triggers onRetry callback when clicked', async () => {
-      const handleRetry = jest.fn();
-      render(
-        <CommandPalette error="Network timeout" onRetry={handleRetry} />
-      );
-      fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
-      await waitFor(() => {
-        expect(screen.getByRole('alert')).toBeInTheDocument();
-      });
+    it(
+      'renders retry button and triggers onRetry callback when clicked',
+      async () => {
+        const handleRetry = jest.fn();
+        render(
+          <CommandPalette error="Network timeout" onRetry={handleRetry} />
+        );
+        fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
+        await waitFor(() => {
+          expect(screen.getByRole('alert')).toBeInTheDocument();
+        });
 
-      const retryBtn = screen.getByRole('button', { name: 'Retry' });
-      expect(retryBtn).toBeInTheDocument();
+        const retryBtn = screen.getByRole('button', { name: 'Retry' });
+        expect(retryBtn).toBeInTheDocument();
 
-      fireEvent.click(retryBtn);
-      expect(handleRetry).toHaveBeenCalledTimes(1);
-    });
+        fireEvent.click(retryBtn);
+        expect(handleRetry).toHaveBeenCalledTimes(1);
+      }
+    );
 
     it('announces search state changes via live region', async () => {
       render(<CommandPalette />);

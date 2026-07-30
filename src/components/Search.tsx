@@ -13,7 +13,7 @@ export type SearchProps<T> = {
   inputLabel?: string;
   /** Placeholder text for input */
   placeholder?: string;
-  /** Search results array. If null or undefined, indicates results are loading or uninitialized */
+  /** Search results array. If null/undefined, indicates loading or uninitialized */
   results?: T[] | null;
   /** Render function for each item */
   renderItem?: (item: T, index: number) => ReactNode;
@@ -165,7 +165,8 @@ export function Search<T>({
           description={
             emptyDescription ??
             (hasQuery
-              ? `No items match "${query}". Try checking for typos or searching for another term.`
+              ? `No items match "${query}". ` +
+                'Try checking for typos or searching for another term.'
               : 'No items available.')
           }
         />
