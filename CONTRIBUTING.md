@@ -65,6 +65,28 @@ Run coverage locally with:
 npm run test:coverage
 ```
 
+#### Testing components with global side effects
+
+Components that register `window`/`document`-level listeners (keyboard shortcuts,
+visibility changes, `matchMedia`) or trigger navigation need a few extra things
+covered beyond a normal render test. `src/components/__tests__/CommandPalette.test.tsx`
+is the reference example — it mocks `next/navigation`'s `useRouter` and drives the
+component entirely through `fireEvent.keyDown(window, ...)`, since the palette's
+open/close/navigate behaviour is wired to a global `keydown` listener rather than
+props. At minimum, cover:
+
+- The open/dismiss triggers themselves (e.g. `Cmd`/`Ctrl+K`, `Escape`) fired on
+  `window`, not just on an element inside the component.
+- Filtering or derived state is asserted against the actual source data
+  (e.g. `ROUTES` from `src/lib/routes.ts`), not a hard-coded expected list, so the
+  test still catches a real regression if that data changes shape.
+- Keyboard selection assertions target a *specific* highlighted item (not just
+  "the first one"), so a test can't pass by accident if the highlight logic is
+  broken but happens to default to index 0.
+- Listener cleanup on unmount (`jest.spyOn(window, 'removeEventListener')`), so a
+  leaked listener from a later regression fails the suite instead of silently
+  accumulating in production.
+
 ---
 
 ## Lighthouse CI — performance budgets

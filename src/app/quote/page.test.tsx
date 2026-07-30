@@ -735,4 +735,3 @@ describe('QuoteError segment boundary', () => {
     });
   });
 });
-
