@@ -105,9 +105,18 @@ export default function PairsClient() {
         <ColumnVisibilityToggle visibility={visibility} onToggle={toggle} />
       </div>
       {api.status === 'error' && (
-        <p role="alert" className="text-sm text-rose-600">
-          {api.error}
-        </p>
+        <div role="alert" className="flex flex-wrap items-center gap-3 rounded-lg border border-rose-200 bg-rose-50 p-4 dark:border-rose-900 dark:bg-rose-950">
+          <p className="text-sm text-rose-600 dark:text-rose-400">
+            {api.error}
+          </p>
+          <button
+            type="button"
+            onClick={api.refetch}
+            className="rounded-full bg-rose-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-rose-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+          >
+            Retry
+          </button>
+        </div>
       )}
       <section
         aria-live="polite"
