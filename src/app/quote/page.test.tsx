@@ -771,8 +771,6 @@ describe('QuoteError segment boundary', () => {
   });
 
   describe('Quote History Integration', () => {
-    it('reads history from localStorage and populates form fields when history entry is clicked', () => {
-  describe('Quote History Memoization', () => {
     it('reads history from localStorage and populates form when a history entry is clicked', () => {
       const historyItems = [
         { source: 'USDC', dest: 'EURC', amount: '2500000', savedAt: 1000 },
