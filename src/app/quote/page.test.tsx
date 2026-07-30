@@ -5,6 +5,7 @@ import {
   waitFor,
   cleanup,
   act,
+  within,
 } from '@testing-library/react';
 import { Component, type ReactNode } from 'react';
 import QuotePage from './page';
@@ -480,7 +481,9 @@ describe('QuotePage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/must differ/i)).toBeInTheDocument();
+      expect(
+        within(screen.getByRole('alert')).getByText(/must differ/i)
+      ).toBeInTheDocument();
     });
   });
 
@@ -515,7 +518,9 @@ describe('QuotePage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/must differ/i)).toBeInTheDocument();
+      expect(
+        within(screen.getByRole('alert')).getByText(/must differ/i)
+      ).toBeInTheDocument();
     });
     expect(screen.getByRole('alert')).toHaveTextContent(
       /Request ID: req-abc-123/
@@ -640,13 +645,165 @@ describe('QuotePage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/must differ/i)).toBeInTheDocument();
+      expect(
+        within(screen.getByRole('alert')).getByText(/must differ/i)
+      ).toBeInTheDocument();
     });
     // Client-generated X-Request-Id is surfaced for support correlation.
     expect(screen.getByRole('alert')).toHaveTextContent(/Request ID:/);
     expect(screen.getByRole('alert').textContent).toMatch(
       /Request ID:\s*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
     );
+  });
+
+  it('announces quote success in the polite live region', async () => {
+    const mockFetch = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      text: async () =>
+        JSON.stringify({
+          source_asset: 'USDC',
+          dest_asset: 'EURC',
+          amount: '1000000',
+          estimated_rate: '1.0',
+          route: ['USDC', 'EURC'],
+        }),
+    } as unknown as Response);
+    globalThis.fetch = mockFetch as unknown as typeof globalThis.fetch;
+
+    render(<QuotePage />);
+    fireEvent.change(getSourceInput(), { target: { value: 'USDC' } });
+    fireEvent.change(getDestinationInput(), { target: { value: 'EURC' } });
+    fireEvent.change(getAmountInput(), { target: { value: '1000000' } });
+    fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
+
+    await waitFor(() => {
+      const liveRegion = document.querySelector(
+        '[aria-live="polite"][aria-atomic="true"]'
+      );
+      expect(liveRegion).toHaveTextContent(
+        /Quote received: USDC → EURC at estimated rate 1/
+      );
+    });
+  });
+
+  it('announces quote failure in the polite live region', async () => {
+    globalThis.fetch = jest.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 400,
+      text: async () =>
+        JSON.stringify({
+          error: 'invalid_request',
+          message: 'source_asset and dest_asset must differ',
+        }),
+    } as unknown as Response);
+
+    render(<QuotePage />);
+    fireEvent.change(getSourceInput(), { target: { value: 'USDC' } });
+    fireEvent.change(getDestinationInput(), { target: { value: 'EURC' } });
+    fireEvent.change(getAmountInput(), { target: { value: '100' } });
+    fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
+
+    await waitFor(() => {
+      const liveRegion = document.querySelector(
+        '[aria-live="polite"][aria-atomic="true"]'
+      );
+      expect(liveRegion).toHaveTextContent(
+        /Quote request failed: source_asset and dest_asset must differ/
+      );
+    });
+  });
+
+  it('clears the slippage announcement when a new valid submission starts', async () => {
+    jest.useFakeTimers();
+
+    const mockFetch = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      text: async () =>
+        JSON.stringify({
+          source_asset: 'USDC',
+          dest_asset: 'EURC',
+          amount: '1000000',
+          estimated_rate: '1.0',
+          route: ['USDC', 'EURC'],
+        }),
+    } as unknown as Response);
+    globalThis.fetch = mockFetch as unknown as typeof globalThis.fetch;
+
+    render(<QuotePage />);
+    fireEvent.change(getSourceInput(), { target: { value: 'USDC' } });
+    fireEvent.change(getDestinationInput(), { target: { value: 'EURC' } });
+    fireEvent.change(getAmountInput(), { target: { value: '1000000' } });
+    fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
+
+    await waitFor(() => {
+      const liveRegion = document.querySelector(
+        '[aria-live="polite"][aria-atomic="true"]'
+      );
+      expect(liveRegion).toHaveTextContent(/Quote received/);
+    });
+
+    // Advance past the 1s cooldown before the second submission
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: async () =>
+        JSON.stringify({
+          source_asset: 'EURC',
+          dest_asset: 'USDC',
+          amount: '500000',
+          estimated_rate: '2.0',
+          route: ['EURC', 'USDC'],
+        }),
+    } as unknown as Response);
+
+    fireEvent.change(getSourceInput(), { target: { value: 'EURC' } });
+    fireEvent.change(getDestinationInput(), { target: { value: 'USDC' } });
+    fireEvent.change(getAmountInput(), { target: { value: '500000' } });
+    fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
+
+    await waitFor(() => {
+      const liveRegion = document.querySelector(
+        '[aria-live="polite"][aria-atomic="true"]'
+      );
+      expect(liveRegion).toHaveTextContent(
+        /Quote received: EURC → USDC at estimated rate 2/
+      );
+    });
+
+    jest.useRealTimers();
+  });
+
+  it('has exactly one polite atomic live region in the page content', async () => {
+    const mockFetch = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      text: async () =>
+        JSON.stringify({
+          source_asset: 'USDC',
+          dest_asset: 'EURC',
+          amount: '1000000',
+          estimated_rate: '1.0',
+          route: ['USDC', 'EURC'],
+        }),
+    } as unknown as Response);
+    globalThis.fetch = mockFetch as unknown as typeof globalThis.fetch;
+
+    render(<QuotePage />);
+    fireEvent.change(getSourceInput(), { target: { value: 'USDC' } });
+    fireEvent.change(getDestinationInput(), { target: { value: 'EURC' } });
+    fireEvent.change(getAmountInput(), { target: { value: '1000000' } });
+    fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toBeInTheDocument();
+    });
+
+    const politeAtomicRegions = document.querySelectorAll(
+      '[aria-live="polite"][aria-atomic="true"]'
+    );
+    expect(politeAtomicRegions).toHaveLength(1);
   });
 });
 
