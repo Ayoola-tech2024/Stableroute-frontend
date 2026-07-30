@@ -87,9 +87,11 @@ export default function QuoteClient() {
   const [requestId, setRequestId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { message: formStatus, announce } = useFormAnnouncement();
+  const [slippageAnnouncement, setSlippageAnnouncement] = useState('');
   const activeRequestRef = useRef(0);
   const requestControllerRef = useRef<AbortController | null>(null);
   const lastSubmitAtRef = useRef<number | null>(null);
+  const lastAnnounceAtRef = useRef(0);
 
   // Prefill once storage has synced client-side (see useLocalStorage's SSR
   // handling). Re-running only when the stored value actually changes avoids
@@ -139,6 +141,7 @@ export default function QuoteClient() {
     setFormError(null);
     setRequestId(null);
     setQuote(null);
+    setSlippageAnnouncement('');
 
     const nextErrors: FieldErrors = {};
     const normalizedSource = normalizeAssetCode(sourceAsset);
@@ -196,6 +199,14 @@ export default function QuoteClient() {
       setQuote(body);
       setHistory(pushHistory(inputs));
       announce('Quote received.');
+      const rateDisplay = formatQuoteRateDisplay(body.estimated_rate).display;
+      const now = Date.now();
+      if (now - lastAnnounceAtRef.current >= 300) {
+        lastAnnounceAtRef.current = now;
+        setSlippageAnnouncement(
+          `Quote received: ${body.source_asset} → ${body.dest_asset} at estimated rate ${rateDisplay}`
+        );
+      }
     } catch (err) {
       if (currentRequestId !== activeRequestRef.current) return;
       if (controller.signal.aborted) return;
@@ -203,6 +214,13 @@ export default function QuoteClient() {
       setFormError(apiError.message ?? 'quote request failed');
       setRequestId(apiError.requestId ?? null);
       announce('');
+      const failTime = Date.now();
+      if (failTime - lastAnnounceAtRef.current >= 300) {
+        lastAnnounceAtRef.current = failTime;
+        setSlippageAnnouncement(
+          `Quote request failed: ${apiError.message ?? 'quote request failed'}`
+        );
+      }
     } finally {
       if (currentRequestId === activeRequestRef.current) {
         setLoading(false);
@@ -211,12 +229,12 @@ export default function QuoteClient() {
         }
       }
     }
-  }, [amount, destAsset, setSavedInputs, sourceAsset]);
+  }, [amount, destAsset, setSavedInputs, sourceAsset, announce]);
 
-  const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     executeQuoteRequest();
-  };
+  }, [executeQuoteRequest]);
 
   // Retry wrapper for the quote request – re‑uses the existing submission logic.
   const retryQuote = useCallback(() => {
@@ -344,6 +362,9 @@ export default function QuoteClient() {
           )}
         </div>
       )}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {slippageAnnouncement}
+      </div>
     </main>
   );
 }
