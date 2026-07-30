@@ -262,7 +262,7 @@ export default function EventsClient() {
                 return (
                   <li
                     key={event.id}
-                    className="rounded border border-neutral-200 p-3 font-mono text-xs dark:border-neutral-800"
+                    className="rounded border border-neutral-200 p-3 compact:p-1.5 font-mono text-xs dark:border-neutral-800"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2 text-neutral-500">
                       <span>{event.type}</span>
