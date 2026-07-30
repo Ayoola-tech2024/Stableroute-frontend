@@ -45,12 +45,12 @@ describe('QuoteHistory Component', () => {
     let renderCount = 0;
 
     // Component wrapper that tracks render count of memoized QuoteHistory
-    const TrackedHistory = React.memo(function TrackedHistory(
-      props: React.ComponentProps<typeof QuoteHistory>
-    ) {
+    const TrackedHistoryInner = (props: React.ComponentProps<typeof QuoteHistory>) => {
       renderCount++;
       return <QuoteHistory {...props} />;
-    });
+    };
+    TrackedHistoryInner.displayName = 'TrackedHistory';
+    const TrackedHistory = React.memo(TrackedHistoryInner);
 
     const ParentComponent = () => {
       const [dummyState, setDummyState] = useState(0);
