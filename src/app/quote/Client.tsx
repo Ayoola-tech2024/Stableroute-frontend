@@ -2,12 +2,18 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { TextField } from '@/components/TextField';
+import { SlippageView } from './Slippage';
 import { apiFetch, type ApiError } from '@/lib/apiClient';
 import { formatQuoteAmountDisplay, formatQuoteRateDisplay } from '@/lib/format';
+import { useFormAnnouncement } from '@/lib/useFormAnnouncement';
 import { useLocalStorage } from '@/lib/useLocalStorage';
 import type { Quote } from '@/lib/types';
 import { isQuote } from '@/lib/validate';
-import { QuoteHistory, type HistoryEntry, type QuoteInputs } from './QuoteHistory';
+import {
+  QuoteHistory,
+  type HistoryEntry,
+  type QuoteInputs,
+} from './QuoteHistory';
 
 type FieldErrors = {
   source?: string;
@@ -80,6 +86,7 @@ export default function QuoteClient() {
   const [formError, setFormError] = useState<string | null>(null);
   const [requestId, setRequestId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const { message: formStatus, announce } = useFormAnnouncement();
   const activeRequestRef = useRef(0);
   const requestControllerRef = useRef<AbortController | null>(null);
   const lastSubmitAtRef = useRef<number | null>(null);
@@ -118,8 +125,7 @@ export default function QuoteClient() {
     }));
   };
 
-  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const executeQuoteRequest = useCallback(async () => {
     const now = Date.now();
     const lastSubmitAt = lastSubmitAtRef.current;
     const isCoolingDown =
@@ -171,10 +177,11 @@ export default function QuoteClient() {
 
     const controller = new AbortController();
     requestControllerRef.current = controller;
-    const requestId = activeRequestRef.current + 1;
-    activeRequestRef.current = requestId;
+    const currentRequestId = activeRequestRef.current + 1;
+    activeRequestRef.current = currentRequestId;
 
     setLoading(true);
+    announce('Requesting quote…');
     try {
       const path =
         `/api/v1/quote?source_asset=${encodeURIComponent(normalizedSource)}` +
@@ -185,23 +192,30 @@ export default function QuoteClient() {
         { signal: controller.signal },
         { validate: isQuote }
       );
-      if (requestId !== activeRequestRef.current) return;
+      if (currentRequestId !== activeRequestRef.current) return;
       setQuote(body);
       setHistory(pushHistory(inputs));
+      announce('Quote received.');
     } catch (err) {
-      if (requestId !== activeRequestRef.current) return;
+      if (currentRequestId !== activeRequestRef.current) return;
       if (controller.signal.aborted) return;
       const apiError = err as ApiError & { requestId?: string };
       setFormError(apiError.message ?? 'quote request failed');
       setRequestId(apiError.requestId ?? null);
+      announce('');
     } finally {
-      if (requestId === activeRequestRef.current) {
+      if (currentRequestId === activeRequestRef.current) {
         setLoading(false);
         if (requestControllerRef.current === controller) {
           requestControllerRef.current = null;
         }
       }
     }
+  }, [amount, destAsset, setSavedInputs, sourceAsset]);
+
+  const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    executeQuoteRequest();
   };
 
   return (
@@ -265,9 +279,12 @@ export default function QuoteClient() {
         >
           {loading ? 'Quoting…' : 'Get quote'}
         </button>
+        <p aria-live="polite" className="sr-only">
+          {formStatus}
+        </p>
       </form>
 
-      {quote &&
+      {quote && (
         (() => {
           const amountFmt = formatQuoteAmountDisplay(quote.amount);
           const rateFmt = formatQuoteRateDisplay(quote.estimated_rate);
@@ -299,7 +316,17 @@ export default function QuoteClient() {
               </dl>
             </section>
           );
-        })()}
+        })()
+      )}
+      {/* Slippage status UI */}
+      <SlippageView
+        status={loading ? 'loading' : formError ? 'error' : quote ? 'success' : 'empty'}
+        slippage={
+          quote ? `${((quote.estimated_rate - 1) * 100).toFixed(2)}%` : undefined
+        }
+        errorMessage={formError ?? undefined}
+        onRetry={formError ? executeQuoteRequest : undefined}
+      />
       {formError && (
         <div role="alert" className="text-sm text-rose-700 dark:text-rose-400">
           <p>{formError}</p>

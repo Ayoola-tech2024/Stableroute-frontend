@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import React, { useState } from 'react';
 import { QuoteHistory, HistoryEntry } from './QuoteHistory';
 
+describe('QuoteHistory Component Contract & Behavior', () => {
 describe('QuoteHistory Component', () => {
   const sampleHistory: HistoryEntry[] = [
     { source: 'USDC', dest: 'EURC', amount: '1000000', savedAt: 1600000000000 },
@@ -15,18 +16,30 @@ describe('QuoteHistory Component', () => {
     expect(container.firstChild).toBeNull();
   });
 
+  it('renders history items with semantic accessibility wiring and handles entry selection', () => {
   it('renders history items and handles entry selection', () => {
     const onSelect = jest.fn();
     render(<QuoteHistory history={sampleHistory} onSelect={onSelect} />);
 
-    expect(screen.getByRole('heading', { name: /Recent quotes/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /USDC → EURC · 1000000/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /XLM → USDC · 500000/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /Recent quotes/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /USDC → EURC · 1000000/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /XLM → USDC · 500000/i })
+    ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /USDC → EURC · 1000000/i }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /USDC → EURC · 1000000/i })
+    );
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect).toHaveBeenCalledWith(sampleHistory[0]);
   });
+
+  it('memoizes rendering and skips re-renders when props remain stable', () => {
+    let renderCount = 0;
 
   it('memoizes rendering and skips re-renders when props are stable', () => {
     let renderCount = 0;
@@ -57,6 +70,8 @@ describe('QuoteHistory Component', () => {
     render(<ParentComponent />);
     expect(renderCount).toBe(1);
 
+    fireEvent.click(screen.getByRole('button', { name: /Re-render Parent/i }));
+    expect(renderCount).toBe(1);
     // Cause parent state change
     fireEvent.click(screen.getByRole('button', { name: /Re-render Parent/i }));
     expect(renderCount).toBe(1); // Render count remains 1 because props are stable!
@@ -68,7 +83,9 @@ describe('QuoteHistory Component', () => {
   it('re-renders when history prop changes to a new array reference', () => {
     let renderCount = 0;
 
-    const TrackedHistory = (props: React.ComponentProps<typeof QuoteHistory>) => {
+    const TrackedHistory = (
+      props: React.ComponentProps<typeof QuoteHistory>
+    ) => {
       renderCount++;
       return <QuoteHistory {...props} />;
     };
@@ -82,7 +99,12 @@ describe('QuoteHistory Component', () => {
           <button
             onClick={() =>
               setHistory([
-                { source: 'BTC', dest: 'USDC', amount: '1', savedAt: 1700000000000 },
+                {
+                  source: 'BTC',
+                  dest: 'USDC',
+                  amount: '1',
+                  savedAt: 1700000000000,
+                },
                 ...sampleHistory,
               ])
             }
@@ -99,6 +121,8 @@ describe('QuoteHistory Component', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Update History/i }));
     expect(renderCount).toBe(2);
-    expect(screen.getByRole('button', { name: /BTC → USDC · 1/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /BTC → USDC · 1/i })
+    ).toBeInTheDocument();
   });
 });
