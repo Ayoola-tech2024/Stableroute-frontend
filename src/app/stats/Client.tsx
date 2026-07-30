@@ -7,6 +7,8 @@ import { Button } from '@/components/Button';
 import { EmptyState } from '@/components/EmptyState';
 import { Spinner } from '@/components/Spinner';
 import { StatTile } from '@/components/StatTile';
+import { useToast } from '@/components/ToastProvider';
+import { writeToClipboard } from '@/lib/clipboard';
 import { isStats } from '@/lib/validate';
 
 type Stats = { totalPairs: number; paused: boolean };
@@ -139,6 +141,15 @@ export function statsSnapshotToJson(snapshot: StatsSnapshot): string {
   return JSON.stringify(snapshot, null, 2);
 }
 
+/** Pure serialiser: concise plain text using the values shown in the UI. */
+export function statsSnapshotToText(snapshot: StatsSnapshot): string {
+  return [
+    'StableRoute stats snapshot',
+    ...snapshot.metrics.map((metric) => `${metric.label}: ${metric.display}`),
+    `Captured: ${snapshot.capturedAt}`,
+  ].join('\n');
+}
+
 function csvEscape(field: string): string {
   if (/["\n,]/.test(field)) {
     return `"${field.replace(/"/g, '""')}"`;
@@ -202,8 +213,12 @@ export function downloadStatsSnapshot(
 }
 
 export default function StatsClient() {
+  const { push } = useToast();
   const result = useApi<Stats>('/api/v1/stats', isStats);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
+  const [isCopying, setIsCopying] = useState(false);
+  const [copyFallback, setCopyFallback] = useState<string | null>(null);
+  const copyInFlightRef = useRef(false);
   const { refetch } = result;
   const status = result.status;
   const error = status === 'error' ? result.error : null;
@@ -214,6 +229,29 @@ export default function StatsClient() {
   useEffect(() => {
     if (status === 'success' && data) setLastUpdatedAt(Date.now());
   }, [status, data]);
+
+  const copyStatsSnapshot = async (stats: Stats) => {
+    if (copyInFlightRef.current) return;
+    copyInFlightRef.current = true;
+    setIsCopying(true);
+    try {
+      const text = statsSnapshotToText(buildStatsSnapshot(stats));
+      const copyResult = await writeToClipboard(text);
+      if (copyResult.ok) {
+        setCopyFallback(null);
+        push('Stats snapshot copied.');
+        return;
+      }
+      setCopyFallback(text);
+      push(
+        "Couldn't copy automatically. Select the snapshot below to copy it.",
+        'error'
+      );
+    } finally {
+      copyInFlightRef.current = false;
+      setIsCopying(false);
+    }
+  };
 
   return (
     <main
@@ -279,7 +317,15 @@ export default function StatsClient() {
             {lastUpdatedAt !== null && (
               <LastUpdated timestamp={lastUpdatedAt} />
             )}
-            <div className="mt-4 flex gap-2">
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={isCopying}
+                onClick={() => void copyStatsSnapshot(data)}
+              >
+                Copy stats snapshot
+              </Button>
               <Button
                 type="button"
                 variant="secondary"
@@ -295,6 +341,21 @@ export default function StatsClient() {
                 Download CSV
               </Button>
             </div>
+            {copyFallback !== null && (
+              <label className="mt-4 block text-xs">
+                <span className="mb-1 block">
+                  Select and copy the stats snapshot:
+                </span>
+                <textarea
+                  aria-label="Stats snapshot text"
+                  readOnly
+                  rows={4}
+                  value={copyFallback}
+                  onFocus={(event) => event.currentTarget.select()}
+                  className="w-full resize-y rounded border border-neutral-300 px-2 py-1 font-mono dark:border-neutral-700 dark:bg-neutral-900"
+                />
+              </label>
+            )}
           </section>
         )}
       </section>
