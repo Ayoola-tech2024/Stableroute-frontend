@@ -142,6 +142,56 @@ describe('SettingsPage — theme selection writes localStorage', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Density selection → localStorage write
+// ---------------------------------------------------------------------------
+
+describe('SettingsPage — density selection writes localStorage', () => {
+  const STORAGE_KEY = 'stableroute.density';
+
+  it("clicking Comfortable writes 'comfortable' under the documented storage key", async () => {
+    render(<SettingsPage />);
+    // Toggle to compact first to ensure comfortable is a change
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText(/compact/i));
+    });
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe('compact');
+
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText(/comfortable/i));
+    });
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe('comfortable');
+    expect(document.documentElement.getAttribute('data-density')).toBe('comfortable');
+  });
+
+  it("clicking Compact writes 'compact' under the documented storage key", async () => {
+    render(<SettingsPage />);
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText(/compact/i));
+    });
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe('compact');
+    expect(document.documentElement.getAttribute('data-density')).toBe('compact');
+  });
+
+  it('checked state reflects the active selection', async () => {
+    render(<SettingsPage />);
+    const comfortableRadio = screen.getByLabelText(/comfortable/i);
+    const compactRadio = screen.getByLabelText(/compact/i);
+
+    await act(async () => {
+      fireEvent.click(compactRadio);
+    });
+    expect(compactRadio).toBeChecked();
+    expect(comfortableRadio).not.toBeChecked();
+
+    await act(async () => {
+      fireEvent.click(comfortableRadio);
+    });
+    expect(comfortableRadio).toBeChecked();
+    expect(compactRadio).not.toBeChecked();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // API base display
 // ---------------------------------------------------------------------------
 
