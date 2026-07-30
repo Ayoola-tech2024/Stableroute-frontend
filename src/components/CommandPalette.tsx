@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/lib/routes';
 
@@ -19,6 +19,31 @@ export function CommandPalette() {
   const matches = Object.values(ROUTES).filter((route) =>
     route.title.toLowerCase().includes(query.toLowerCase())
   );
+
+  const [announcement, setAnnouncement] = useState('');
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const announce = useCallback((message: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setAnnouncement(message);
+    }, 300);
+  }, []);
+
+  useEffect(() => {
+    if (!query) return;
+    if (matches.length > 0) {
+      announce(`${matches.length} ${matches.length === 1 ? 'result' : 'results'} found`);
+    } else {
+      announce('No results found');
+    }
+  }, [matches.length, query, announce]);
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
 
   const activeOptionId =
     activeIndex >= 0 && activeIndex < matches.length
@@ -108,6 +133,9 @@ export function CommandPalette() {
           placeholder="Jump to…"
           className="w-full rounded-md border border-neutral-300 px-3 py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:border-neutral-700 dark:bg-neutral-950"
         />
+        <div className="sr-only" aria-live="polite" aria-atomic="true">
+          {announcement}
+        </div>
         <ul
           id="command-palette-listbox"
           role="listbox"
