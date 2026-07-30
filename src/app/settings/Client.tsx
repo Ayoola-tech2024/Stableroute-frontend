@@ -5,7 +5,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { readTheme, effectiveTheme, type Theme } from '@/lib/theme';
 import { getApiBase } from '@/lib/config';
 import { useApi } from '@/lib/useApi';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { isRouterStatus } from '@/lib/validate';
 
 function ApiBaseRow() {
@@ -23,8 +23,24 @@ function ApiBaseRow() {
 
 type RouterStatus = { paused: boolean };
 
-function RouterStatusRow() {
+function RouterStatusRow({
+  onStatusChange,
+}: {
+  onStatusChange?: (message: string | null) => void;
+}) {
   const status = useApi<RouterStatus>('/api/v1/admin/status', isRouterStatus);
+  const prevStatusRef = useRef(status.status);
+
+  useEffect(() => {
+    if (status.status === prevStatusRef.current) return;
+    prevStatusRef.current = status.status;
+
+    if (status.status === 'success') {
+      onStatusChange?.('Router status loaded');
+    } else if (status.status === 'error') {
+      onStatusChange?.('Failed to load router status');
+    }
+  }, [status, onStatusChange]);
 
   return (
     <Card title="Router status">
@@ -93,7 +109,40 @@ function AppearancePreview() {
   );
 }
 
+const ANNOUNCE_DEBOUNCE_MS = 300;
+
 export default function SettingsClient() {
+  const [announcement, setAnnouncement] = useState('');
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const announce = useCallback((message: string | null) => {
+    if (!message) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setAnnouncement(message);
+    }, ANNOUNCE_DEBOUNCE_MS);
+  }, []);
+
+  const handleThemeChange = useCallback(
+    (theme: Theme) => {
+      announce(`Theme changed to ${theme}`);
+    },
+    [announce]
+  );
+
+  // Announce cross-tab theme changes received via storage events.
+  useEffect(() => {
+    const handler = () => {
+      const theme = readTheme();
+      announce(`Theme changed to ${theme}`);
+    };
+    window.addEventListener('storage', handler);
+    return () => {
+      window.removeEventListener('storage', handler);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [announce]);
+
   return (
     <main
       id="main-content"
@@ -101,15 +150,18 @@ export default function SettingsClient() {
       className="mx-auto flex min-h-[60vh] max-w-2xl flex-col gap-8 p-8 focus:outline-none"
     >
       <h1 className="text-3xl font-semibold tracking-tight">Settings</h1>
+      <p role="status" aria-live="polite" className="sr-only">
+        {announcement}
+      </p>
       <section className="flex flex-col gap-2">
         <h2 className="text-lg font-medium">Appearance</h2>
         <p className="text-sm text-neutral-600 dark:text-neutral-400">
           Choose a colour scheme. System follows your OS preference.
         </p>
-        <ThemeToggle />
+        <ThemeToggle onChange={handleThemeChange} />
       </section>
       <AppearancePreview />
-      <RouterStatusRow />
+      <RouterStatusRow onStatusChange={announce} />
       <ApiBaseRow />
     </main>
   );

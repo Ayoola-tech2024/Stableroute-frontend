@@ -312,3 +312,175 @@ describe('SettingsPage — edge cases', () => {
     expect(() => fireEvent.click(refreshBtn)).not.toThrow();
   });
 });
+
+// ---------------------------------------------------------------------------
+// ARIA live region announcements
+// ---------------------------------------------------------------------------
+
+describe('SettingsPage — ARIA live region announcements', () => {
+  beforeEach(() => {
+    stubMatchMedia(false);
+    window.localStorage.clear();
+  });
+
+  it('has exactly one aria-live=polite region in the page content', () => {
+    render(<SettingsPage />);
+    expect(document.querySelectorAll('main [aria-live=polite]')).toHaveLength(
+      1
+    );
+  });
+
+  it('the live region is visually hidden via sr-only', () => {
+    render(<SettingsPage />);
+    const live = document.querySelector('main [aria-live=polite]');
+    expect(live).toHaveClass('sr-only');
+  });
+
+  it('the live region has role="status" for implicit polite behaviour', () => {
+    render(<SettingsPage />);
+    const live = document.querySelector('main [aria-live=polite]');
+    expect(live).toHaveAttribute('role', 'status');
+  });
+
+  it('announces a theme change after clicking a theme button', async () => {
+    jest.useFakeTimers();
+    render(<SettingsPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /^dark$/i }));
+
+    // Debounce is 300ms — advance past it.
+    act(() => {
+      jest.advanceTimersByTime(350);
+    });
+
+    const live = document.querySelector('main [aria-live=polite]');
+    expect(live).toHaveTextContent('Theme changed to dark');
+
+    jest.useRealTimers();
+  });
+
+  it('announces theme change for each distinct final selection', async () => {
+    jest.useFakeTimers();
+    render(<SettingsPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /^light$/i }));
+    act(() => {
+      jest.advanceTimersByTime(350);
+    });
+
+    const live = document.querySelector('main [aria-live=polite]');
+    expect(live).toHaveTextContent('Theme changed to light');
+
+    fireEvent.click(screen.getByRole('button', { name: /^dark$/i }));
+    act(() => {
+      jest.advanceTimersByTime(350);
+    });
+    expect(live).toHaveTextContent('Theme changed to dark');
+
+    jest.useRealTimers();
+  });
+
+  it('debounces rapid theme changes to only the last one', async () => {
+    jest.useFakeTimers();
+    render(<SettingsPage />);
+
+    // Click three different themes rapidly.
+    fireEvent.click(screen.getByRole('button', { name: /^light$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^dark$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^system$/i }));
+
+    // Advance only partway — announcement should NOT have fired yet.
+    act(() => {
+      jest.advanceTimersByTime(100);
+    });
+    const live = document.querySelector('main [aria-live=polite]');
+    // The debounce timer resets on each click, so nothing should be announced.
+    expect(live).toHaveTextContent('');
+
+    // Advance past the debounce window.
+    act(() => {
+      jest.advanceTimersByTime(250);
+    });
+    expect(live).toHaveTextContent('Theme changed to system');
+
+    jest.useRealTimers();
+  });
+
+  it('announces a theme change from a cross-tab storage event', async () => {
+    jest.useFakeTimers();
+    render(<SettingsPage />);
+
+    // Simulate another tab writing a theme to localStorage.
+    window.localStorage.setItem('stableroute.theme', 'dark');
+    act(() => {
+      window.dispatchEvent(new Event('storage'));
+    });
+
+    act(() => {
+      jest.advanceTimersByTime(350);
+    });
+
+    const live = document.querySelector('main [aria-live=polite]');
+    expect(live).toHaveTextContent('Theme changed to dark');
+
+    jest.useRealTimers();
+  });
+
+  it('cleans up the debounce timer on unmount', () => {
+    jest.useFakeTimers();
+    const { unmount } = render(<SettingsPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /^dark$/i }));
+    unmount();
+
+    // Advancing past debounce should not cause errors after unmount.
+    expect(() => {
+      act(() => {
+        jest.advanceTimersByTime(500);
+      });
+    }).not.toThrow();
+
+    jest.useRealTimers();
+  });
+
+  it('starts with an empty announcement', () => {
+    render(<SettingsPage />);
+    const live = document.querySelector('main [aria-live=polite]');
+    expect(live).toHaveTextContent('');
+  });
+
+  it('announces router status success via the live region', async () => {
+    // Mock a successful router status response
+    global.fetch = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      text: async () => JSON.stringify({ paused: false }),
+    } as unknown as Response);
+
+    render(<SettingsPage />);
+
+    // The useApi hook fetches asynchronously, then the debounce fires after
+    // 300 ms. waitFor polls until the live region contains the expected text.
+    await waitFor(
+      () => {
+        const live = document.querySelector('main [aria-live=polite]');
+        expect(live).toHaveTextContent('Router status loaded');
+      },
+      { timeout: 2000 }
+    );
+  });
+
+  it('announces router status failure via the live region', async () => {
+    // Mock a failed router status response
+    global.fetch = jest.fn().mockRejectedValueOnce(new Error('Network error'));
+
+    render(<SettingsPage />);
+
+    await waitFor(
+      () => {
+        const live = document.querySelector('main [aria-live=polite]');
+        expect(live).toHaveTextContent('Failed to load router status');
+      },
+      { timeout: 2000 }
+    );
+  });
+});
