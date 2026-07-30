@@ -469,7 +469,7 @@ describe('CommandPalette', () => {
 
   describe('Search States & Accessibility', () => {
     it('renders distinct loading state when loading prop is true', async () => {
-      render(<CommandPalette loading={true} />);
+      render(<CommandPalette loading />);
       fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
       await waitFor(() => {
         expect(screen.getByText('Searching routes…')).toBeInTheDocument();
@@ -499,10 +499,7 @@ describe('CommandPalette', () => {
     it('renders retry button and triggers onRetry callback when clicked', async () => {
       const handleRetry = jest.fn();
       render(
-        <CommandPalette
-          error="Network timeout"
-          onRetry={handleRetry}
-        />
+        <CommandPalette error="Network timeout" onRetry={handleRetry} />
       );
       fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
       await waitFor(() => {

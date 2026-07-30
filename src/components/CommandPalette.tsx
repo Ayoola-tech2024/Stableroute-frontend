@@ -76,9 +76,9 @@ export function CommandPalette({
     } else if (query.trim().length > 0 && matches.length === 0) {
       setAnnouncement(`No routes found for "${query.trim()}".`);
     } else if (matches.length > 0) {
-      setAnnouncement(
-        `Found ${matches.length} matching route${matches.length === 1 ? '' : 's'}.`
-      );
+      const count = matches.length;
+      const suffix = count === 1 ? '' : 's';
+      setAnnouncement(`Found ${count} matching route${suffix}.`);
     }
   }, [open, error, loading, query, matches.length]);
 
@@ -244,4 +244,3 @@ export function CommandPalette({
     </div>
   );
 }
-

@@ -747,27 +747,50 @@ function readWorkingTreeFiles(files, cwd, fsDep = defaultFsAdapter()) {
 
 function getPrDiffFiles(cwd, baseRef, runner = defaultGitRunner) {
   const target = baseRef || 'origin/main';
-  const threeDot = runner(
-    'diff',
-    ['--name-only', '--diff-filter=ACMR', `${target}...HEAD`],
-    cwd
-  )
-    .split('\n')
-    .map((s) => s.trim())
-    .filter(Boolean);
-  if (threeDot.length > 0) return threeDot;
+
+  try {
+    const threeDot = runner(
+      'diff',
+      ['--name-only', '--diff-filter=ACMR', `${target}...HEAD`],
+      cwd
+    )
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (threeDot.length > 0) return threeDot;
+  } catch (_err) {
+    // Merge base not reachable (e.g. shallow clone, missing origin/main)
+  }
 
   // Fallback when no merge-base is reachable (e.g. shallow clone, fork):
   // two-dot diff is conservative — entire tree relative to base.
-  const twoDot = runner(
-    'diff',
-    ['--name-only', '--diff-filter=ACMR', target, 'HEAD'],
-    cwd
-  )
-    .split('\n')
-    .map((s) => s.trim())
-    .filter(Boolean);
-  return twoDot;
+  try {
+    const twoDot = runner(
+      'diff',
+      ['--name-only', '--diff-filter=ACMR', target, 'HEAD'],
+      cwd
+    )
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (twoDot.length > 0) return twoDot;
+  } catch (_err) {
+    // Fallback to comparing HEAD~1 if target ref does not exist locally
+  }
+
+  try {
+    const headPrev = runner(
+      'diff',
+      ['--name-only', '--diff-filter=ACMR', 'HEAD~1', 'HEAD'],
+      cwd
+    )
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return headPrev;
+  } catch (_err) {
+    return [];
+  }
 }
 
 function getPrDiffContents(files, cwd, fsDep = defaultFsAdapter()) {

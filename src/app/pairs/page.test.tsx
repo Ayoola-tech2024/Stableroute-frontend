@@ -277,9 +277,7 @@ describe('PairsPage', () => {
     const retryBtn = screen.getByRole('button', { name: 'Retry' });
     expect(retryBtn).toBeInTheDocument();
 
-    mockFetch([
-      { source: 'USDC', destination: 'XLM' },
-    ]);
+    mockFetch([{ source: 'USDC', destination: 'XLM' }]);
     fireEvent.click(retryBtn);
 
     await waitFor(() => {

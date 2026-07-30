@@ -66,9 +66,9 @@ export function Search<T>({
       if (results.length === 0) {
         setAnnouncement(`No results found for "${query.trim()}".`);
       } else {
-        setAnnouncement(
-          `Found ${results.length} result${results.length === 1 ? '' : 's'} for "${query.trim()}".`
-        );
+        const count = results.length;
+        const suffix = count === 1 ? '' : 's';
+        setAnnouncement(`Found ${count} result${suffix} for "${query.trim()}".`);
       }
     } else if (results && results.length === 0) {
       setAnnouncement(emptyTitle);
@@ -112,7 +112,7 @@ export function Search<T>({
         <input
           id="search-input"
           type="search"
-          role="searchbox"
+          role="combobox"
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder={placeholder}
@@ -120,9 +120,7 @@ export function Search<T>({
           aria-expanded={Boolean(results && results.length > 0)}
           aria-controls={listId}
           aria-invalid={isError}
-          aria-describedby={
-            isError ? 'search-error-message' : undefined
-          }
+          aria-describedby={isError ? 'search-error-message' : undefined}
           className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:border-neutral-700 dark:bg-neutral-900"
         />
       </div>
@@ -175,7 +173,11 @@ export function Search<T>({
       {!loading && !isError && results && results.length > 0 && renderItem && (
         <ul id={listId} role="listbox" className="flex flex-col gap-2">
           {results.map((item, index) => (
-            <li key={getKey ? getKey(item) : index} role="option">
+            <li
+              key={getKey ? getKey(item) : index}
+              role="option"
+              aria-selected={false}
+            >
               {renderItem(item, index)}
             </li>
           ))}

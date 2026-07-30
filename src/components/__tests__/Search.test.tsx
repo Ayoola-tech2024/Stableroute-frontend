@@ -18,7 +18,7 @@ describe('Search Component', () => {
       />
     );
 
-    const input = screen.getByRole('searchbox', { name: 'Search Pairs' });
+    const input = screen.getByRole('combobox', { name: 'Search Pairs' });
     expect(input).toBeInTheDocument();
     expect(input).toHaveAttribute('placeholder', 'Enter search term…');
   });
@@ -27,7 +27,7 @@ describe('Search Component', () => {
     const handleQueryChange = jest.fn();
     render(<Search query="" onQueryChange={handleQueryChange} />);
 
-    const input = screen.getByRole('searchbox');
+    const input = screen.getByRole('combobox');
     fireEvent.change(input, { target: { value: 'usdc' } });
     expect(handleQueryChange).toHaveBeenCalledWith('usdc');
   });
@@ -51,9 +51,7 @@ describe('Search Component', () => {
   });
 
   it('renders distinct loading state when loading is true', () => {
-    render(
-      <Search query="test" onQueryChange={jest.fn()} loading={true} />
-    );
+    render(<Search query="test" onQueryChange={jest.fn()} loading />);
 
     expect(screen.getByText('Searching…')).toBeInTheDocument();
   });
@@ -98,7 +96,7 @@ describe('Search Component', () => {
       screen.getByText('Network failure: 500 Internal Server Error')
     ).toBeInTheDocument();
 
-    const input = screen.getByRole('searchbox');
+    const input = screen.getByRole('combobox');
     expect(input).toHaveAttribute('aria-invalid', 'true');
     expect(input).toHaveAttribute('aria-describedby', 'search-error-message');
   });
@@ -133,17 +131,11 @@ describe('Search Component', () => {
     const statusRegion = screen.getByRole('status');
     expect(statusRegion).toHaveTextContent('Found 1 result for "Alpha".');
 
-    rerender(
-      <Search query="xyz" onQueryChange={jest.fn()} results={[]} />
-    );
+    rerender(<Search query="xyz" onQueryChange={jest.fn()} results={[]} />);
     expect(statusRegion).toHaveTextContent('No results found for "xyz".');
 
     rerender(
-      <Search
-        query="xyz"
-        onQueryChange={jest.fn()}
-        error="Connection lost"
-      />
+      <Search query="xyz" onQueryChange={jest.fn()} error="Connection lost" />
     );
     expect(statusRegion).toHaveTextContent('Search failed: Connection lost');
   });
