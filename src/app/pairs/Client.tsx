@@ -143,7 +143,7 @@ export default function PairsClient() {
                 )}
                 <ul className="divide-y divide-neutral-200 rounded-lg border border-neutral-200 dark:divide-neutral-800 dark:border-neutral-800">
                   {destinations.map((dest) => (
-                    <li key={`${source}::${dest}`} className="px-4 py-3">
+                    <li key={`${source}::${dest}`} className="px-4 py-3 compact:px-2 compact:py-1.5">
                       <div className="flex items-center justify-between gap-3">
                         {isColumnVisible('destination') ? (
                           <span className="font-mono text-sm">{dest}</span>
