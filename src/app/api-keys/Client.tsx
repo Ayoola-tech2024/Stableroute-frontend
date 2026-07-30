@@ -6,6 +6,7 @@ import { ResourceList } from '@/components/ResourceList';
 import { TextField } from '@/components/TextField';
 import { TimeAgo } from '@/components/TimeAgo';
 import { Badge } from '@/components/Badge';
+import { Tooltip } from '@/components/Tooltip';
 import { apiDelete, apiGet, apiPost } from '@/lib/apiClient';
 import { useFormAnnouncement } from '@/lib/useFormAnnouncement';
 import { useList } from '@/lib/useList';
@@ -168,9 +169,11 @@ function ApiKeysClient() {
                 <p className="text-sm font-medium">{key.label}</p>
                 {key.prefix === recentPrefix && <Badge variant="ok">New</Badge>}
               </div>
-              <p className="font-mono text-xs text-neutral-500">
-                {key.prefix}…
-              </p>
+              <Tooltip content={key.prefix}>
+                <p className="font-mono text-xs text-neutral-500">
+                  {key.prefix}…
+                </p>
+              </Tooltip>
               <p className="text-xs text-neutral-500">
                 Created <TimeAgo ts={key.createdAt} />
               </p>
