@@ -68,7 +68,9 @@ export function Search<T>({
       } else {
         const count = results.length;
         const suffix = count === 1 ? '' : 's';
-        setAnnouncement(`Found ${count} result${suffix} for "${query.trim()}".`);
+        setAnnouncement(
+          `Found ${count} result${suffix} for "${query.trim()}".`
+        );
       }
     } else if (results && results.length === 0) {
       setAnnouncement(emptyTitle);

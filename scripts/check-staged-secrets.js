@@ -63,6 +63,7 @@ const SKIP_CONTENT_PATTERNS = [
   /pnpm-lock\.yaml$/i,
   /\.min\.js$/i,
   /\.min\.css$/i,
+  /check-staged-secrets\.js$/i,
 ];
 
 // ---------------------------------------------------------------------------

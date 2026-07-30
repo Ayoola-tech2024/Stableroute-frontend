@@ -39,12 +39,8 @@ describe('ThemeToggle', () => {
 
     it('renders three theme buttons with correct accessible names', () => {
       render(<ThemeToggle />);
-      expect(
-        screen.getByRole('button', { name: 'light' })
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole('button', { name: 'dark' })
-      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'light' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'dark' })).toBeInTheDocument();
       expect(
         screen.getByRole('button', { name: 'system' })
       ).toBeInTheDocument();
@@ -54,15 +50,18 @@ describe('ThemeToggle', () => {
   describe('empty state (no stored value)', () => {
     it('defaults to system when nothing is stored', () => {
       render(<ThemeToggle />);
-      expect(
-        screen.getByRole('button', { name: 'system' })
-      ).toHaveAttribute('aria-pressed', 'true');
-      expect(
-        screen.getByRole('button', { name: 'light' })
-      ).toHaveAttribute('aria-pressed', 'false');
-      expect(
-        screen.getByRole('button', { name: 'dark' })
-      ).toHaveAttribute('aria-pressed', 'false');
+      expect(screen.getByRole('button', { name: 'system' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+      expect(screen.getByRole('button', { name: 'light' })).toHaveAttribute(
+        'aria-pressed',
+        'false'
+      );
+      expect(screen.getByRole('button', { name: 'dark' })).toHaveAttribute(
+        'aria-pressed',
+        'false'
+      );
     });
   });
 
@@ -70,31 +69,36 @@ describe('ThemeToggle', () => {
     it('reads a stored dark theme from localStorage and marks it pressed', () => {
       window.localStorage.setItem('stableroute.theme', 'dark');
       render(<ThemeToggle />);
-      expect(
-        screen.getByRole('button', { name: 'dark' })
-      ).toHaveAttribute('aria-pressed', 'true');
-      expect(
-        screen.getByRole('button', { name: 'light' })
-      ).toHaveAttribute('aria-pressed', 'false');
-      expect(
-        screen.getByRole('button', { name: 'system' })
-      ).toHaveAttribute('aria-pressed', 'false');
+      expect(screen.getByRole('button', { name: 'dark' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+      expect(screen.getByRole('button', { name: 'light' })).toHaveAttribute(
+        'aria-pressed',
+        'false'
+      );
+      expect(screen.getByRole('button', { name: 'system' })).toHaveAttribute(
+        'aria-pressed',
+        'false'
+      );
     });
 
     it('reads a stored light theme from localStorage', () => {
       window.localStorage.setItem('stableroute.theme', 'light');
       render(<ThemeToggle />);
-      expect(
-        screen.getByRole('button', { name: 'light' })
-      ).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('button', { name: 'light' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
     });
 
     it('reads a stored system theme from localStorage', () => {
       window.localStorage.setItem('stableroute.theme', 'system');
       render(<ThemeToggle />);
-      expect(
-        screen.getByRole('button', { name: 'system' })
-      ).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('button', { name: 'system' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
     });
   });
 
@@ -106,17 +110,19 @@ describe('ThemeToggle', () => {
         }),
       });
       render(<ThemeToggle />);
-      expect(
-        screen.getByRole('button', { name: 'system' })
-      ).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('button', { name: 'system' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
     });
 
     it('falls back to system when the stored value is invalid', () => {
       window.localStorage.setItem('stableroute.theme', 'midnight');
       render(<ThemeToggle />);
-      expect(
-        screen.getByRole('button', { name: 'system' })
-      ).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('button', { name: 'system' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
     });
 
     it('still updates the UI when localStorage.setItem throws', () => {
@@ -129,9 +135,10 @@ describe('ThemeToggle', () => {
       });
 
       fireEvent.click(screen.getByRole('button', { name: 'dark' }));
-      expect(
-        screen.getByRole('button', { name: 'dark' })
-      ).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('button', { name: 'dark' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
     });
   });
 
@@ -145,28 +152,33 @@ describe('ThemeToggle', () => {
     it('marks the selected theme as pressed', () => {
       render(<ThemeToggle />);
       fireEvent.click(screen.getByRole('button', { name: 'light' }));
-      expect(
-        screen.getByRole('button', { name: 'light' })
-      ).toHaveAttribute('aria-pressed', 'true');
-      expect(
-        screen.getByRole('button', { name: 'dark' })
-      ).toHaveAttribute('aria-pressed', 'false');
+      expect(screen.getByRole('button', { name: 'light' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+      expect(screen.getByRole('button', { name: 'dark' })).toHaveAttribute(
+        'aria-pressed',
+        'false'
+      );
     });
 
     it('updates aria-pressed when clicking a different theme', () => {
       render(<ThemeToggle />);
       fireEvent.click(screen.getByRole('button', { name: 'dark' }));
-      expect(
-        screen.getByRole('button', { name: 'dark' })
-      ).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('button', { name: 'dark' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
 
       fireEvent.click(screen.getByRole('button', { name: 'system' }));
-      expect(
-        screen.getByRole('button', { name: 'system' })
-      ).toHaveAttribute('aria-pressed', 'true');
-      expect(
-        screen.getByRole('button', { name: 'dark' })
-      ).toHaveAttribute('aria-pressed', 'false');
+      expect(screen.getByRole('button', { name: 'system' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+      expect(screen.getByRole('button', { name: 'dark' })).toHaveAttribute(
+        'aria-pressed',
+        'false'
+      );
     });
 
     it('toggles the dark class on the document root', () => {
@@ -198,9 +210,10 @@ describe('ThemeToggle', () => {
 
       await user.tab();
       await user.keyboard('{Enter}');
-      expect(
-        screen.getByRole('button', { name: 'light' })
-      ).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('button', { name: 'light' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
     });
 
     it('activates a theme button via keyboard Space', async () => {
@@ -209,9 +222,10 @@ describe('ThemeToggle', () => {
 
       await user.tab();
       await user.keyboard(' ');
-      expect(
-        screen.getByRole('button', { name: 'light' })
-      ).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('button', { name: 'light' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
     });
   });
 });
