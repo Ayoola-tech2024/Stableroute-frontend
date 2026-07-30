@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import React, { memo, useCallback, useState, useRef } from 'react';
 import { IconButton } from '@/components/IconButton';
 import { ResourceList } from '@/components/ResourceList';
 import { TextField } from '@/components/TextField';
@@ -14,7 +14,9 @@ import { useToast } from '@/components/ToastProvider';
 import type { ApiKey, CreateApiKeyResponse } from '@/lib/types';
 import { isApiKeyListResponse, isCreateApiKeyResponse } from '@/lib/validate';
 
-export default function ApiKeysClient() {
+function ApiKeysClient() {
+  const renderCount = useRef(0);
+  renderCount.current++;
   const loadItems = useCallback(
     () =>
       apiGet<{ items: ApiKey[] }>('/api/v1/api-keys', {
@@ -186,3 +188,4 @@ export default function ApiKeysClient() {
     </main>
   );
 }
+export default memo(ApiKeysClient);

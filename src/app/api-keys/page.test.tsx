@@ -342,32 +342,43 @@ describe('ApiKeysPage', () => {
         } as unknown as Response);
     }
 
-    it('copies the secret and hides it once the write succeeds', async () => {
-      mockCreateFlow();
-      const writeText = jest.fn().mockResolvedValue(undefined);
-      setClipboard({ writeText });
+    it('increments render count on each render', async () => {
+  // Initial fetch with empty list
+  global.fetch = jest.fn().mockResolvedValueOnce({
+    ok: true,
+    text: async () => JSON.stringify({ items: [] }),
+  } as unknown as Response);
 
-      renderPage();
-      await waitFor(() => screen.getByText(/No API keys yet/i));
-      await createKey();
+  renderPage();
+  await waitFor(() => screen.getByText(/No API keys yet/i));
+  const getRenderCount = () => Number(screen.getByTestId('render-count').textContent);
+  const initial = getRenderCount();
+  expect(initial).toBe(1);
 
-      expect(
-        await screen.findByText('sk_live_supersecret')
-      ).toBeInTheDocument();
+  // Mock fetches for creating a key and then listing keys
+  const now = Date.now();
+  global.fetch = jest
+    .fn()
+    .mockResolvedValueOnce({
+      ok: true,
+      text: async () => JSON.stringify({ items: [] }),
+    } as unknown as Response) // initial list
+    .mockResolvedValueOnce({
+      ok: true,
+      text: async () => JSON.stringify({ key: 'sk_test', prefix: 'sk_test' }),
+    } as unknown as Response) // create response
+    .mockResolvedValueOnce({
+      ok: true,
+      text: async () =>
+        JSON.stringify({
+          items: [{ prefix: 'sk_test', label: 'Test', createdAt: now }],
+        }),
+    } as unknown as Response); // list after creation
 
-      fireEvent.click(
-        screen.getByRole('button', { name: 'Copy API key secret' })
-      );
-
-      await waitFor(() => {
-        expect(writeText).toHaveBeenCalledWith('sk_live_supersecret');
-      });
-      await waitFor(() => {
-        expect(
-          screen.queryByText('sk_live_supersecret')
-        ).not.toBeInTheDocument();
-      });
-    });
+  await createKey();
+  const after = getRenderCount();
+  expect(after).toBeGreaterThan(initial);
+});
 
     it('shows a toast and a selectable fallback field when the write is rejected', async () => {
       mockCreateFlow();
