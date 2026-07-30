@@ -58,6 +58,7 @@ Reusable building blocks live under `src/components` and are imported by route p
 | [`KeyboardShortcutsHelp`](src/components/KeyboardShortcutsHelp.tsx) | `?` overlay listing keyboard shortcuts                                 |
 | [`CommandPalette`](src/components/CommandPalette.tsx)               | `Cmd/Ctrl+K` route jump palette                                        |
 | [`Tooltip`](src/components/Tooltip.tsx)                             | Status surface with loading/empty/error/success states (see [tooltips.md](docs/tooltips.md)) |
+| [`Slippage`](src/components/Slippage.tsx)                           | Slippage tolerance control with preset/custom options and state handling (see [slippage.md](docs/slippage.md)) |
 
 Data fetching helpers (`apiClient`, `useApi`, `useList`) live in `src/lib`.
 

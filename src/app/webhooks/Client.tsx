@@ -11,7 +11,7 @@ import { TimeAgo } from '@/components/TimeAgo';
 import { apiDelete, apiGet, apiPost } from '@/lib/apiClient';
 import { useList } from '@/lib/useList';
 import { WEBHOOK_EVENT_OPTIONS } from '@/lib/webhookEvents';
-import type { Webhook } from '@/lib/types';
+import type { TestDeliveryResult, Webhook } from '@/lib/types';
 import { isWebhookListResponse } from '@/lib/validate';
 
 function isHttpsUrl(value: string): boolean {
@@ -38,6 +38,32 @@ export default function WebhooksClient() {
   const [submitting, setSubmitting] = useState(false);
   const [confirmRegister, setConfirmRegister] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+
+  const [testResults, setTestResults] = useState<
+    Record<
+      string,
+      { testing: boolean; statusCode?: number; ok?: boolean } | undefined
+    >
+  >({});
+
+  const sendTestDelivery = async (hookId: string) => {
+    setTestResults((prev) => ({ ...prev, [hookId]: { testing: true } }));
+    try {
+      const result = await apiPost<TestDeliveryResult>(
+        `/api/v1/webhooks/${hookId}/test`,
+        {}
+      );
+      setTestResults((prev) => ({
+        ...prev,
+        [hookId]: { testing: false, statusCode: result.statusCode, ok: result.ok },
+      }));
+    } catch {
+      setTestResults((prev) => ({
+        ...prev,
+        [hookId]: { testing: false, statusCode: 0, ok: false },
+      }));
+    }
+  };
 
   const isLoading = hooks.status === 'loading';
   const isError = hooks.status === 'error';
@@ -189,10 +215,35 @@ export default function WebhooksClient() {
                     <Badge key={event}>{event}</Badge>
                   ))}
                 </div>
+                {testResults[hook.id]?.statusCode !== undefined && (
+                  <p
+                    className={`mt-1 text-xs ${
+                      testResults[hook.id]?.ok
+                        ? 'text-green-600'
+                        : 'text-rose-600'
+                    }`}
+                  >
+                    Test delivery:{' '}
+                    {testResults[hook.id]?.ok ? 'OK' : 'Failed'} (
+                    {testResults[hook.id]?.statusCode})
+                  </p>
+                )}
               </div>
-              <IconButton label="Remove webhook" onClick={requestRemove}>
-                ×
-              </IconButton>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={testResults[hook.id]?.testing}
+                  aria-busy={testResults[hook.id]?.testing}
+                  aria-label={`Test delivery for ${hook.url}`}
+                  onClick={() => void sendTestDelivery(hook.id)}
+                  className="rounded-full border border-neutral-300 px-3 py-1 text-xs hover:border-neutral-500 disabled:opacity-50 dark:border-neutral-700"
+                >
+                  {testResults[hook.id]?.testing ? 'Testing…' : 'Test'}
+                </button>
+                <IconButton label="Remove webhook" onClick={requestRemove}>
+                  ×
+                </IconButton>
+              </div>
             </>
           )}
           renderCells={(hook, { requestRemove }) => [
@@ -207,13 +258,33 @@ export default function WebhooksClient() {
             <span key="registered" className="text-xs text-neutral-500">
               <TimeAgo ts={hook.createdAt} />
             </span>,
-            <IconButton
-              key="actions"
-              label="Remove webhook"
-              onClick={requestRemove}
-            >
-              ×
-            </IconButton>,
+            <div key="actions" className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={testResults[hook.id]?.testing}
+                aria-busy={testResults[hook.id]?.testing}
+                aria-label={`Test delivery for ${hook.url}`}
+                onClick={() => void sendTestDelivery(hook.id)}
+                className="rounded-full border border-neutral-300 px-3 py-1 text-xs hover:border-neutral-500 disabled:opacity-50 dark:border-neutral-700"
+              >
+                {testResults[hook.id]?.testing ? 'Testing…' : 'Test'}
+              </button>
+              {testResults[hook.id]?.statusCode !== undefined && (
+                <span
+                  className={`text-xs ${
+                    testResults[hook.id]?.ok
+                      ? 'text-green-600'
+                      : 'text-rose-600'
+                  }`}
+                >
+                  {testResults[hook.id]?.ok ? 'OK' : 'Failed'} (
+                  {testResults[hook.id]?.statusCode})
+                </span>
+              )}
+              <IconButton label="Remove webhook" onClick={requestRemove}>
+                ×
+              </IconButton>
+            </div>,
           ]}
           removeDialogTitle="Remove webhook?"
           removeDialogConfirmLabel="Remove"
