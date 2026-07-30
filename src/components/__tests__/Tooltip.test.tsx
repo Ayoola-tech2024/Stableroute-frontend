@@ -1,6 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import { Tooltip } from '../Tooltip';
 
+const RenderCounter = () => {
+  let count = 0;
+  return (
+    <Tooltip status="success">
+      <span data-testid="child">{count}</span>
+    </Tooltip>
+  );
+};
+
 describe('Tooltip', () => {
   it('renders its trigger children', () => {
     render(

@@ -19,11 +19,19 @@ describe('QuoteHistory Component', () => {
     const onSelect = jest.fn();
     render(<QuoteHistory history={sampleHistory} onSelect={onSelect} />);
 
-    expect(screen.getByRole('heading', { name: /Recent quotes/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /USDC → EURC · 1000000/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /XLM → USDC · 500000/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /Recent quotes/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /USDC → EURC · 1000000/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /XLM → USDC · 500000/i })
+    ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /USDC → EURC · 1000000/i }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /USDC → EURC · 1000000/i })
+    );
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect).toHaveBeenCalledWith(sampleHistory[0]);
   });
@@ -32,15 +40,12 @@ describe('QuoteHistory Component', () => {
     let renderCount = 0;
 
     // Component wrapper that tracks render count of memoized QuoteHistory
-    const TrackedHistory = React.memo(
-      function TrackedHistoryComponent(
-        props: React.ComponentProps<typeof QuoteHistory>
-      ) {
-        renderCount++;
-        return <QuoteHistory {...props} />;
-      }
-    );
-    TrackedHistory.displayName = 'TrackedHistory';
+    const TrackedHistory = React.memo(function TrackedHistory(
+      props: React.ComponentProps<typeof QuoteHistory>
+    ) {
+      renderCount++;
+      return <QuoteHistory {...props} />;
+    });
 
     const ParentComponent = () => {
       const [dummyState, setDummyState] = useState(0);
@@ -71,7 +76,9 @@ describe('QuoteHistory Component', () => {
   it('re-renders when history prop changes to a new array reference', () => {
     let renderCount = 0;
 
-    const TrackedHistory = (props: React.ComponentProps<typeof QuoteHistory>) => {
+    const TrackedHistory = (
+      props: React.ComponentProps<typeof QuoteHistory>
+    ) => {
       renderCount++;
       return <QuoteHistory {...props} />;
     };
@@ -85,7 +92,12 @@ describe('QuoteHistory Component', () => {
           <button
             onClick={() =>
               setHistory([
-                { source: 'BTC', dest: 'USDC', amount: '1', savedAt: 1700000000000 },
+                {
+                  source: 'BTC',
+                  dest: 'USDC',
+                  amount: '1',
+                  savedAt: 1700000000000,
+                },
                 ...sampleHistory,
               ])
             }
@@ -102,6 +114,8 @@ describe('QuoteHistory Component', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Update History/i }));
     expect(renderCount).toBe(2);
-    expect(screen.getByRole('button', { name: /BTC → USDC · 1/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /BTC → USDC · 1/i })
+    ).toBeInTheDocument();
   });
 });
