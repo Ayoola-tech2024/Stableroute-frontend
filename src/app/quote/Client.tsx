@@ -15,8 +15,6 @@ type FieldErrors = {
   amount?: string;
 };
 
-
-
 const INPUTS_KEY = 'stableroute.quote.inputs';
 const HISTORY_KEY = 'stableroute.quote.history';
 const MAX_HISTORY = 5;

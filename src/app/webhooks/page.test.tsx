@@ -899,7 +899,9 @@ describe('WebhooksPage', () => {
       ) as unknown as typeof global.fetch;
     render(<WebhooksPage />);
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', { name: /retry/i })
+      ).toBeInTheDocument()
     );
     expect(document.querySelector('table')).not.toBeInTheDocument();
   });
@@ -931,7 +933,9 @@ describe('WebhooksPage', () => {
     render(<WebhooksPage />);
 
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', { name: /retry/i })
+      ).toBeInTheDocument()
     );
 
     const retryButton = screen.getByRole('button', { name: /retry/i });
@@ -962,7 +966,9 @@ describe('WebhooksPage', () => {
       expect(screen.getByRole('alert')).toBeInTheDocument()
     );
     expect(screen.queryByText(/Loading…/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/No webhooks registered/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/No webhooks registered/i)
+    ).not.toBeInTheDocument();
     expect(document.querySelector('table')).not.toBeInTheDocument();
   });
 
@@ -985,7 +991,11 @@ describe('WebhooksPage', () => {
       expect(screen.getByText('https://example.com/hook')).toBeInTheDocument()
     );
     expect(screen.queryByText(/Loading…/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/No webhooks registered/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/failed to load webhooks/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/No webhooks registered/i)
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/failed to load webhooks/i)
+    ).not.toBeInTheDocument();
   });
 });
