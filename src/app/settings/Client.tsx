@@ -2,6 +2,7 @@
 
 import { Card } from '@/components/Card';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { DensityToggle } from '@/components/DensityToggle';
 import { readTheme, effectiveTheme, type Theme } from '@/lib/theme';
 import { getApiBase } from '@/lib/config';
 import { useApi } from '@/lib/useApi';
@@ -153,12 +154,20 @@ export default function SettingsClient() {
       <p role="status" aria-live="polite" className="sr-only">
         {announcement}
       </p>
-      <section className="flex flex-col gap-2">
+      <section className="flex flex-col gap-4">
         <h2 className="text-lg font-medium">Appearance</h2>
-        <p className="text-sm text-neutral-600 dark:text-neutral-400">
-          Choose a colour scheme. System follows your OS preference.
-        </p>
-        <ThemeToggle onChange={handleThemeChange} />
+        <div className="flex flex-col gap-2">
+          <label className="text-sm text-neutral-600 dark:text-neutral-400">
+            Theme
+          </label>
+          <ThemeToggle onChange={handleThemeChange} />
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="text-sm text-neutral-600 dark:text-neutral-400">
+            Density
+          </label>
+          <DensityToggle />
+        </div>
       </section>
       <AppearancePreview />
       <RouterStatusRow onStatusChange={announce} />

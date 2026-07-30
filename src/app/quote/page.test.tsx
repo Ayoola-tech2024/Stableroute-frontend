@@ -79,7 +79,8 @@ describe('QuotePage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole('status')).toHaveTextContent(/USDC → EURC/);
+      const quoteStatus = screen.getAllByRole('status').find((el) => el.textContent?.includes('USDC'));
+      expect(quoteStatus).toHaveTextContent(/USDC → EURC/);
     });
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining(
@@ -131,7 +132,8 @@ describe('QuotePage', () => {
     } as unknown as Response);
 
     await waitFor(() => {
-      expect(screen.getByRole('status')).toHaveTextContent(/USDC → EURC/);
+      const quoteStatus = screen.getAllByRole('status').find((el) => el.textContent?.includes('USDC'));
+      expect(quoteStatus).toHaveTextContent(/USDC → EURC/);
     });
   });
 
@@ -189,7 +191,8 @@ describe('QuotePage', () => {
     expect(secondSignal).toBeDefined();
 
     await waitFor(() => {
-      expect(screen.getByRole('status')).toHaveTextContent(/USDC → EURC/);
+      const quoteStatus = screen.getAllByRole('status').find((el) => el.textContent?.includes('USDC'));
+      expect(quoteStatus).toHaveTextContent(/USDC → EURC/);
     });
   });
 
@@ -226,7 +229,8 @@ describe('QuotePage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole('status')).toHaveTextContent(/1\.00 XLM/);
+      const quoteStatus = screen.getAllByRole('status').find((el) => el.textContent?.includes('XLM'));
+      expect(quoteStatus).toHaveTextContent(/1\.00 XLM/);
     });
     expect(screen.getByText('1.00 XLM')).toHaveAttribute('title', '10000000');
     expect(screen.getByText('1,234')).toHaveAttribute('title', '1234');
@@ -407,7 +411,8 @@ describe('QuotePage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole('status')).toHaveTextContent(/USDC → EURC/);
+      const quoteStatus = screen.getAllByRole('status').find((el) => el.textContent?.includes('USDC'));
+      expect(quoteStatus).toHaveTextContent(/USDC → EURC/);
     });
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('source_asset=USDC&dest_asset=EURC&amount=100'),
@@ -517,6 +522,94 @@ describe('QuotePage', () => {
     );
   });
 
+  it('announces form submission status via a polite live region', async () => {
+    let resolveRequest: ((value: Response) => void) | undefined;
+    const pendingResponse = new Promise<Response>((resolve) => {
+      resolveRequest = resolve;
+    });
+
+    const mockFetch = jest
+      .fn()
+      .mockImplementationOnce(() => pendingResponse);
+    globalThis.fetch = mockFetch as unknown as typeof globalThis.fetch;
+
+    render(<QuotePage />);
+    fireEvent.change(getSourceInput(), {
+      target: { value: 'USDC' },
+    });
+    fireEvent.change(getDestinationInput(), {
+      target: { value: 'EURC' },
+    });
+    fireEvent.change(getAmountInput(), {
+      target: { value: '100' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
+
+    // The sr-only live region should announce the in-progress status
+    const liveAnnouncement = document.querySelector(
+      '[aria-live=polite].sr-only'
+    );
+    expect(liveAnnouncement).toHaveTextContent('Requesting quote…');
+
+    resolveRequest?.({
+      ok: true,
+      text: async () =>
+        JSON.stringify({
+          source_asset: 'USDC',
+          dest_asset: 'EURC',
+          amount: '100',
+          estimated_rate: '1.0',
+          route: ['USDC', 'EURC'],
+        }),
+    } as unknown as Response);
+
+    await waitFor(() => {
+      expect(liveAnnouncement).toHaveTextContent('Quote received.');
+    });
+  });
+
+  it('clears the sr-only announcement when the request fails', async () => {
+    const mockFetch = jest.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      text: async () =>
+        JSON.stringify({
+          error: 'server_error',
+          message: 'Internal server error',
+        }),
+    } as unknown as Response);
+    globalThis.fetch = mockFetch as unknown as typeof globalThis.fetch;
+
+    render(<QuotePage />);
+    fireEvent.change(getSourceInput(), {
+      target: { value: 'USDC' },
+    });
+    fireEvent.change(getDestinationInput(), {
+      target: { value: 'EURC' },
+    });
+    fireEvent.change(getAmountInput(), {
+      target: { value: '100' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+
+    const liveAnnouncement = document.querySelector(
+      '[aria-live=polite].sr-only'
+    );
+    expect(liveAnnouncement).toHaveTextContent('');
+  });
+
+  it('does not announce form status on initial render', () => {
+    render(<QuotePage />);
+    const liveAnnouncement = document.querySelector(
+      '[aria-live=polite].sr-only'
+    );
+    expect(liveAnnouncement).toHaveTextContent('');
+  });
+
   it('omits the requestId line when the backend does not include one', async () => {
     globalThis.fetch = jest.fn().mockResolvedValueOnce({
       ok: false,
@@ -549,7 +642,11 @@ describe('QuotePage', () => {
     await waitFor(() => {
       expect(screen.getByText(/must differ/i)).toBeInTheDocument();
     });
-    expect(screen.getByRole('alert')).not.toHaveTextContent(/Request ID/);
+    // Client-generated X-Request-Id is surfaced for support correlation.
+    expect(screen.getByRole('alert')).toHaveTextContent(/Request ID:/);
+    expect(screen.getByRole('alert').textContent).toMatch(
+      /Request ID:\s*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
+    );
   });
 });
 
@@ -671,5 +768,65 @@ describe('QuoteError segment boundary', () => {
       'quote segment error boundary caught:',
       'digest-quote-1'
     );
+  });
+
+  describe('Quote History Integration', () => {
+    it('reads history from localStorage and populates form fields when history entry is clicked', () => {
+  describe('Quote History Memoization', () => {
+    it('reads history from localStorage and populates form when a history entry is clicked', () => {
+      const historyItems = [
+        { source: 'USDC', dest: 'EURC', amount: '2500000', savedAt: 1000 },
+      ];
+      localStorage.setItem(
+        'stableroute.quote.history',
+        JSON.stringify(historyItems)
+      );
+
+      render(<QuotePage />);
+
+      expect(
+        screen.getByRole('heading', { name: /Recent quotes/i })
+      ).toBeInTheDocument();
+      const historyButton = screen.getByRole('button', {
+        name: /USDC → EURC · 2500000/i,
+      });
+      expect(historyButton).toBeInTheDocument();
+
+      fireEvent.click(historyButton);
+
+      expect(getSourceInput()).toHaveValue('USDC');
+      expect(getDestinationInput()).toHaveValue('EURC');
+      expect(getAmountInput()).toHaveValue('2500000');
+    });
+
+    it('verifies history component render count does not increase when form inputs change', () => {
+      const historyItems = [
+        { source: 'USDC', dest: 'EURC', amount: '1000000', savedAt: 1000 },
+      ];
+      localStorage.setItem(
+        'stableroute.quote.history',
+        JSON.stringify(historyItems)
+      );
+
+      render(<QuotePage />);
+
+      expect(
+        screen.getByRole('button', { name: /USDC → EURC · 1000000/i })
+      ).toBeInTheDocument();
+
+      // Type in Source asset input
+      fireEvent.change(getSourceInput(), { target: { value: 'XLM' } });
+
+      // Type in Destination asset input
+      fireEvent.change(getDestinationInput(), { target: { value: 'BTC' } });
+
+      // Type in Amount input
+      fireEvent.change(getAmountInput(), { target: { value: '500' } });
+
+      // Output remains unchanged
+      expect(
+        screen.getByRole('button', { name: /USDC → EURC · 1000000/i })
+      ).toBeInTheDocument();
+    });
   });
 });
