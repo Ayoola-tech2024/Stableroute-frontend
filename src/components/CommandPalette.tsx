@@ -1,19 +1,33 @@
-'use client';
-
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/lib/routes';
+import { EmptyState } from './EmptyState';
+import { Button } from './Button';
+
+export type CommandPaletteProps = {
+  /** Optional error message if route search encountered an error */
+  error?: string | null;
+  /** Callback fired when user clicks retry button in error state */
+  onRetry?: () => void;
+  /** Whether search operation is in progress */
+  loading?: boolean;
+};
 
 /**
  * Registers a global keydown listener that opens/closes the command palette
  * on ⌘/Ctrl+K and closes it on Escape. Does not interfere with native
  * browser shortcuts when the palette is closed.
  */
-export function CommandPalette() {
+export function CommandPalette({
+  error = null,
+  onRetry,
+  loading = false,
+}: CommandPaletteProps = {}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [announcement, setAnnouncement] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const matches = Object.values(ROUTES).filter((route) =>
@@ -48,6 +62,26 @@ export function CommandPalette() {
     inputRef.current?.focus();
   }, [open]);
 
+  // Update screen-reader live announcements on state changes
+  useEffect(() => {
+    if (!open) {
+      setAnnouncement('');
+      return;
+    }
+
+    if (error) {
+      setAnnouncement(`Search failed: ${error}`);
+    } else if (loading) {
+      setAnnouncement('Searching routes…');
+    } else if (query.trim().length > 0 && matches.length === 0) {
+      setAnnouncement(`No routes found for "${query.trim()}".`);
+    } else if (matches.length > 0) {
+      const count = matches.length;
+      const suffix = count === 1 ? '' : 's';
+      setAnnouncement(`Found ${count} matching route${suffix}.`);
+    }
+  }, [open, error, loading, query, matches.length]);
+
   const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     switch (event.key) {
       case 'ArrowDown':
@@ -78,7 +112,17 @@ export function CommandPalette() {
     router.push(href);
   };
 
+  const handleRetry = () => {
+    setAnnouncement('Retrying route search…');
+    if (onRetry) {
+      onRetry();
+    }
+  };
+
   if (!open) return null;
+
+  const isError = Boolean(error);
+  const isEmpty = !isError && !loading && matches.length === 0;
 
   return (
     <div
@@ -88,6 +132,16 @@ export function CommandPalette() {
       className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-8"
       onClick={() => setOpen(false)}
     >
+      {/* Hidden ARIA live region for state announcements */}
+      <div
+        className="sr-only"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {announcement}
+      </div>
+
       <div
         className="w-full max-w-lg rounded-lg bg-white p-4 shadow-xl dark:bg-neutral-900"
         onClick={(event) => event.stopPropagation()}
@@ -99,6 +153,10 @@ export function CommandPalette() {
           aria-controls="command-palette-listbox"
           aria-activedescendant={activeOptionId}
           aria-label="Search routes"
+          aria-invalid={isError}
+          aria-describedby={
+            isError ? 'command-palette-error-message' : undefined
+          }
           value={query}
           onChange={(event) => {
             setQuery(event.target.value);
@@ -108,13 +166,60 @@ export function CommandPalette() {
           placeholder="Jump to…"
           className="w-full rounded-md border border-neutral-300 px-3 py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:border-neutral-700 dark:bg-neutral-950"
         />
-        <ul
-          id="command-palette-listbox"
-          role="listbox"
-          className="mt-2 max-h-64 overflow-auto"
-        >
-          {matches.length > 0 ? (
-            matches.map((route, index) => (
+
+        {/* Loading State */}
+        {loading && (
+          <div className="mt-4 py-4 text-center text-sm text-neutral-500">
+            Searching routes…
+          </div>
+        )}
+
+        {/* Error State with Retry Affordance */}
+        {isError && (
+          <div
+            id="command-palette-error-message"
+            role="alert"
+            aria-live="assertive"
+            className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-4 text-center dark:border-rose-900/50 dark:bg-rose-950/30"
+          >
+            <p className="text-sm font-semibold text-rose-800 dark:text-rose-200">
+              Search failed
+            </p>
+            <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">
+              {error}
+            </p>
+            {onRetry && (
+              <div className="mt-3">
+                <Button type="button" variant="secondary" onClick={handleRetry}>
+                  Retry
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Distinct Empty State */}
+        {isEmpty && (
+          <div className="mt-4">
+            <EmptyState
+              title="No routes found"
+              description={
+                query.trim().length > 0
+                  ? `No routes match "${query}". Try searching for another keyword.`
+                  : 'No routes available.'
+              }
+            />
+          </div>
+        )}
+
+        {/* Results List */}
+        {!loading && !isError && matches.length > 0 && (
+          <ul
+            id="command-palette-listbox"
+            role="listbox"
+            className="mt-2 max-h-64 overflow-auto"
+          >
+            {matches.map((route, index) => (
               <li key={route.href} role="presentation">
                 <button
                   id={`command-palette-option-${route.href}`}
@@ -132,13 +237,9 @@ export function CommandPalette() {
                   {route.title}
                 </button>
               </li>
-            ))
-          ) : (
-            <li className="px-2 py-2 text-sm text-neutral-500 dark:text-neutral-400">
-              No routes found
-            </li>
-          )}
-        </ul>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

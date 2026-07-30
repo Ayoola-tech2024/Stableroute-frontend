@@ -156,6 +156,24 @@ handler shows a toast and the request still rejects so callers can react.
 | `apiPatch`  | PATCH  | JSON body             |
 | `apiDelete` | DELETE | 204 → `undefined`     |
 
+## Webhook Test Delivery
+
+The webhooks page adds a per-row "Test" button that sends a test delivery to a
+registered endpoint via `POST /api/v1/webhooks/:id/test`.
+
+The response shape is:
+
+```ts
+type TestDeliveryResult = {
+  statusCode: number;
+  ok: boolean;
+};
+```
+
+On success the row displays the status code inline (e.g. `OK (200)`). On failure
+it shows `Failed (<statusCode>)`. The control is disabled while a test is
+in-flight.
+
 ## Timeouts
 
 Default timeout is 15s (`timeoutMs` option). Abort errors surface as

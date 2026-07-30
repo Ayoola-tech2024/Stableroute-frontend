@@ -899,7 +899,9 @@ describe('WebhooksPage', () => {
       ) as unknown as typeof global.fetch;
     render(<WebhooksPage />);
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', { name: /retry/i })
+      ).toBeInTheDocument()
     );
     expect(document.querySelector('table')).not.toBeInTheDocument();
   });
@@ -931,7 +933,9 @@ describe('WebhooksPage', () => {
     render(<WebhooksPage />);
 
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', { name: /retry/i })
+      ).toBeInTheDocument()
     );
 
     const retryButton = screen.getByRole('button', { name: /retry/i });
@@ -962,7 +966,9 @@ describe('WebhooksPage', () => {
       expect(screen.getByRole('alert')).toBeInTheDocument()
     );
     expect(screen.queryByText(/Loading…/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/No webhooks registered/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/No webhooks registered/i)
+    ).not.toBeInTheDocument();
     expect(document.querySelector('table')).not.toBeInTheDocument();
   });
 
@@ -985,7 +991,310 @@ describe('WebhooksPage', () => {
       expect(screen.getByText('https://example.com/hook')).toBeInTheDocument()
     );
     expect(screen.queryByText(/Loading…/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/No webhooks registered/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/failed to load webhooks/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/No webhooks registered/i)
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/failed to load webhooks/i)
+    ).not.toBeInTheDocument();
+  });
+
+  // -------------------------------------------------------------------------
+  // TEST DELIVERY
+  // -------------------------------------------------------------------------
+
+  it('renders a Test button for each webhook row', async () => {
+    mockFetchSequence({ ok: true, body: { items: [HOOK_1, HOOK_2] } });
+    render(<WebhooksPage />);
+
+    await waitFor(() =>
+      expect(screen.getByText('https://example.com/hook')).toBeInTheDocument()
+    );
+
+    const testButtons = screen.getAllByRole('button', { name: /test delivery/i });
+    expect(testButtons).toHaveLength(2);
+    testButtons.forEach((btn) => expect(btn).not.toBeDisabled());
+  });
+
+  it('shows Testing… and disables the button while a test is in-flight', async () => {
+    let resolveTest!: (v: unknown) => void;
+    const fetchMock = jest.fn();
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve(JSON.stringify({ items: [HOOK_1] })),
+      } as unknown as Response)
+      .mockImplementationOnce(
+        () =>
+          new Promise((res) => {
+            resolveTest = res;
+          })
+      );
+    global.fetch = fetchMock as unknown as typeof global.fetch;
+
+    render(<WebhooksPage />);
+    await waitFor(() =>
+      expect(screen.getByText('https://example.com/hook')).toBeInTheDocument()
+    );
+
+    const testButton = screen.getByRole('button', {
+      name: /test delivery for https:\/\/example\.com\/hook/i,
+    });
+    fireEvent.click(testButton);
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /testing/i })).toBeDisabled()
+    );
+    expect(screen.getByRole('button', { name: /testing/i })).toHaveAttribute(
+      'aria-busy',
+      'true'
+    );
+
+    resolveTest({
+      ok: true,
+      status: 200,
+      text: () => Promise.resolve(JSON.stringify({ statusCode: 200, ok: true })),
+    });
+  });
+
+  it('dispatches a POST to the test endpoint when Test is clicked', async () => {
+    const fetchMock = jest.fn();
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve(JSON.stringify({ items: [HOOK_1] })),
+      } as unknown as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({ statusCode: 200, ok: true })
+          ),
+      } as unknown as Response);
+    global.fetch = fetchMock as unknown as typeof global.fetch;
+
+    render(<WebhooksPage />);
+    await waitFor(() =>
+      expect(screen.getByText('https://example.com/hook')).toBeInTheDocument()
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /test delivery for https:\/\/example\.com\/hook/i,
+      })
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(/test delivery:/i)
+      ).toBeInTheDocument()
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const testCall = fetchMock.mock.calls[1];
+    expect(testCall[0]).toContain(`/api/v1/webhooks/${HOOK_1.id}/test`);
+    expect(testCall[1].method).toBe('POST');
+  });
+
+  it('shows OK and status code on a successful test delivery', async () => {
+    const fetchMock = jest.fn();
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve(JSON.stringify({ items: [HOOK_1] })),
+      } as unknown as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({ statusCode: 200, ok: true })
+          ),
+      } as unknown as Response);
+    global.fetch = fetchMock as unknown as typeof global.fetch;
+
+    render(<WebhooksPage />);
+    await waitFor(() =>
+      expect(screen.getByText('https://example.com/hook')).toBeInTheDocument()
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /test delivery for https:\/\/example\.com\/hook/i,
+      })
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText(/OK \(200\)/i)).toBeInTheDocument()
+    );
+    expect(screen.getByText(/test delivery:/i)).toHaveClass('text-green-600');
+  });
+
+  it('shows Failed and status code on a failed delivery', async () => {
+    const fetchMock = jest.fn();
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve(JSON.stringify({ items: [HOOK_1] })),
+      } as unknown as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({ statusCode: 500, ok: false })
+          ),
+      } as unknown as Response);
+    global.fetch = fetchMock as unknown as typeof global.fetch;
+
+    render(<WebhooksPage />);
+    await waitFor(() =>
+      expect(screen.getByText('https://example.com/hook')).toBeInTheDocument()
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /test delivery for https:\/\/example\.com\/hook/i,
+      })
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText(/Failed \(500\)/i)).toBeInTheDocument()
+    );
+    expect(screen.getByText(/test delivery:/i)).toHaveClass('text-rose-600');
+  });
+
+  it('shows Failed \(0\) when the test endpoint itself fails', async () => {
+    const fetchMock = jest.fn();
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve(JSON.stringify({ items: [HOOK_1] })),
+      } as unknown as Response)
+      .mockRejectedValueOnce(new Error('Network error'));
+    global.fetch = fetchMock as unknown as typeof global.fetch;
+
+    render(<WebhooksPage />);
+    await waitFor(() =>
+      expect(screen.getByText('https://example.com/hook')).toBeInTheDocument()
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /test delivery for https:\/\/example\.com\/hook/i,
+      })
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText(/Failed \(0\)/i)).toBeInTheDocument()
+    );
+  });
+
+  it('testing one webhook does not affect another', async () => {
+    let resolveTest!: (v: unknown) => void;
+    const fetchMock = jest.fn();
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({ items: [HOOK_1, HOOK_2] })
+          ),
+      } as unknown as Response)
+      .mockImplementationOnce(
+        () =>
+          new Promise((res) => {
+            resolveTest = res;
+          })
+      );
+    global.fetch = fetchMock as unknown as typeof global.fetch;
+
+    render(<WebhooksPage />);
+    await waitFor(() =>
+      expect(screen.getByText('https://example.com/hook')).toBeInTheDocument()
+    );
+
+    const buttons = screen.getAllByRole('button', { name: /test delivery/i });
+    expect(buttons).toHaveLength(2);
+
+    // Click Test on HOOK_1
+    fireEvent.click(buttons[0]);
+
+    await waitFor(() => {
+      const hook1Btn = screen.getByRole('button', {
+        name: /test delivery for https:\/\/example\.com\/hook/i,
+      });
+      expect(hook1Btn).toBeDisabled();
+      expect(hook1Btn).toHaveTextContent(/testing/i);
+    });
+
+    // HOOK_2 button should still be enabled
+    const hook2Btn = screen.getByRole('button', {
+      name: /test delivery for https:\/\/other\.example\.com\/hook/i,
+    });
+    expect(hook2Btn).not.toBeDisabled();
+    expect(hook2Btn).toHaveTextContent(/^Test$/);
+
+    resolveTest({
+      ok: true,
+      status: 200,
+      text: () => Promise.resolve(JSON.stringify({ statusCode: 200, ok: true })),
+    });
+  });
+
+  it('re-tests a webhook overwrites the previous result', async () => {
+    const fetchMock = jest.fn();
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve(JSON.stringify({ items: [HOOK_1] })),
+      } as unknown as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({ statusCode: 500, ok: false })
+          ),
+      } as unknown as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({ statusCode: 200, ok: true })
+          ),
+      } as unknown as Response);
+    global.fetch = fetchMock as unknown as typeof global.fetch;
+
+    render(<WebhooksPage />);
+    await waitFor(() =>
+      expect(screen.getByText('https://example.com/hook')).toBeInTheDocument()
+    );
+
+    const testButton = screen.getByRole('button', {
+      name: /test delivery for https:\/\/example\.com\/hook/i,
+    });
+
+    // First test — fails
+    fireEvent.click(testButton);
+    await waitFor(() =>
+      expect(screen.getByText(/Failed \(500\)/i)).toBeInTheDocument()
+    );
+
+    // Second test — succeeds
+    fireEvent.click(testButton);
+    await waitFor(() =>
+      expect(screen.getByText(/OK \(200\)/i)).toBeInTheDocument()
+    );
+    expect(screen.queryByText(/Failed \(500\)/i)).not.toBeInTheDocument();
   });
 });
