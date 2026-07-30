@@ -218,6 +218,13 @@ export default function QuoteClient() {
     executeQuoteRequest();
   };
 
+  // Retry wrapper for the quote request – re‑uses the existing submission logic.
+  const retryQuote = useCallback(() => {
+    // Create a synthetic submit event to trigger the same validation & request flow.
+    // The event type is cast to any to satisfy the FormEvent generic.
+    onSubmit(new Event('submit') as any);
+  }, [onSubmit]);
+
   return (
     <main
       id="main-content"
@@ -325,7 +332,7 @@ export default function QuoteClient() {
           quote ? `${((quote.estimated_rate - 1) * 100).toFixed(2)}%` : undefined
         }
         errorMessage={formError ?? undefined}
-        onRetry={formError ? executeQuoteRequest : undefined}
+        onRetry={formError ? retryQuote : undefined}
       />
       {formError && (
         <div role="alert" className="text-sm text-rose-700 dark:text-rose-400">

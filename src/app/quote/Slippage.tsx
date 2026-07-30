@@ -28,8 +28,9 @@ type Props = {
 };
 
 function SlippageBase({ status, slippage, errorMessage, onRetry }: Props) {
-  const content = (
-    <span data-testid="slippage-status">
+  // Accessible live region – always present, content changes with status.
+  const liveRegion = (
+    <span role="status" aria-live="polite" data-testid="slippage-status">
       {status === 'empty' && 'No slippage data'}
       {status === 'loading' && 'Calculating slippage…'}
       {status === 'error' && `Error: ${errorMessage ?? 'Unable to calculate'}`}
@@ -37,11 +38,16 @@ function SlippageBase({ status, slippage, errorMessage, onRetry }: Props) {
     </span>
   );
 
+  // Render a tooltip‑styled badge for visual consistency.
+  const tooltip = (
+    <Tooltip status={status} message={status === 'error' ? errorMessage : undefined}>
+      {liveRegion}
+    </Tooltip>
+  );
+
   return (
-    <section className="flex items-center gap-2" data-testid="slippage-view">
-      <Tooltip status={status} message={status === 'error' ? errorMessage : undefined}>
-        {content}
-      </Tooltip>
+    <section className="flex items-center gap-2">
+      {tooltip}
       {status === 'error' && onRetry && (
         <button
           type="button"
