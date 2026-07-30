@@ -267,6 +267,24 @@ describe('PairsPage', () => {
     );
   });
 
+  it('renders retry button on error and refetches on click', async () => {
+    mockFetchError('Network error');
+    render(<PairsPage />);
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+
+    const retryBtn = screen.getByRole('button', { name: 'Retry' });
+    expect(retryBtn).toBeInTheDocument();
+
+    mockFetch([{ source: 'USDC', destination: 'XLM' }]);
+    fireEvent.click(retryBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('USDC/XLM')).toBeInTheDocument();
+    });
+  });
+
   it('has exactly one aria-live=polite region', async () => {
     mockFetch([]);
     render(<PairsPage />);
