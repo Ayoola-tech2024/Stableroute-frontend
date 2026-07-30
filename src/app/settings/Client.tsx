@@ -2,6 +2,7 @@
 
 import { Card } from '@/components/Card';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { DensityToggle } from '@/components/DensityToggle';
 import { readTheme, effectiveTheme, type Theme } from '@/lib/theme';
 import { getApiBase } from '@/lib/config';
 import { useApi } from '@/lib/useApi';
@@ -101,12 +102,20 @@ export default function SettingsClient() {
       className="mx-auto flex min-h-[60vh] max-w-2xl flex-col gap-8 p-8 focus:outline-none"
     >
       <h1 className="text-3xl font-semibold tracking-tight">Settings</h1>
-      <section className="flex flex-col gap-2">
+      <section className="flex flex-col gap-4">
         <h2 className="text-lg font-medium">Appearance</h2>
-        <p className="text-sm text-neutral-600 dark:text-neutral-400">
-          Choose a colour scheme. System follows your OS preference.
-        </p>
-        <ThemeToggle />
+        <div className="flex flex-col gap-2">
+          <label className="text-sm text-neutral-600 dark:text-neutral-400">
+            Theme
+          </label>
+          <ThemeToggle />
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="text-sm text-neutral-600 dark:text-neutral-400">
+            Density
+          </label>
+          <DensityToggle />
+        </div>
       </section>
       <AppearancePreview />
       <RouterStatusRow />
