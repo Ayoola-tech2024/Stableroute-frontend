@@ -38,12 +38,15 @@ function SlippageBase({ status, slippage, errorMessage, onRetry }: Props) {
     </span>
   );
 
-  // Render a tooltip‑styled badge for visual consistency.
-  const tooltip = (
-    <Tooltip status={status} message={status === 'error' ? errorMessage : undefined}>
-      {liveRegion}
-    </Tooltip>
-  );
+  // Wrap in a Tooltip on error to surface the error message.
+  const tooltip =
+    status === 'error' ? (
+      <Tooltip content={errorMessage ?? 'Error'}>
+        {liveRegion}
+      </Tooltip>
+    ) : (
+      liveRegion
+    );
 
   return (
     <section className="flex items-center gap-2">

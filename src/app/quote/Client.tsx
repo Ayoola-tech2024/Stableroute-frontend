@@ -229,12 +229,12 @@ export default function QuoteClient() {
         }
       }
     }
-  }, [amount, destAsset, setSavedInputs, sourceAsset]);
+  }, [amount, destAsset, setSavedInputs, sourceAsset, announce]);
 
-  const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     executeQuoteRequest();
-  };
+  }, [executeQuoteRequest]);
 
   // Retry wrapper for the quote request – re‑uses the existing submission logic.
   const retryQuote = useCallback(() => {
