@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import React, { useState } from 'react';
 import { Slippage } from '../Slippage';
 
 describe('Slippage Component', () => {
@@ -142,4 +143,99 @@ describe('Slippage Component', () => {
     rerender(<Slippage {...props} />);
     expect(screen.getByRole('button', { name: '0.5%' })).toHaveAttribute('aria-pressed', 'true');
   });
+
+  it('memoizes rendering and skips re-renders when parent state updates with stable props (render count check)', () => {
+    let renderCount = 0;
+
+    const TrackedSlippage = (props: React.ComponentProps<typeof Slippage>) => {
+      renderCount++;
+      return <Slippage {...props} />;
+    };
+
+    const ParentComponent = () => {
+      const [dummyState, setDummyState] = useState(0);
+      const [value] = useState(0.5);
+      const onChange = React.useCallback(() => {}, []);
+
+      return (
+        <div>
+          <button onClick={() => setDummyState((s) => s + 1)}>
+            Re-render Parent ({dummyState})
+          </button>
+          <TrackedSlippage value={value} onChange={onChange} />
+        </div>
+      );
+    };
+
+    render(<ParentComponent />);
+    expect(renderCount).toBe(1);
+
+    fireEvent.click(screen.getByRole('button', { name: /Re-render Parent/i }));
+    expect(renderCount).toBe(1);
+
+    fireEvent.click(screen.getByRole('button', { name: /Re-render Parent/i }));
+    expect(renderCount).toBe(1);
+  });
+
+  it('skips re-renders when options array reference changes but elements are identical', () => {
+    let renderCount = 0;
+
+    const TrackedSlippage = (props: React.ComponentProps<typeof Slippage>) => {
+      renderCount++;
+      return <Slippage {...props} />;
+    };
+
+    const ParentComponent = () => {
+      const [options, setOptions] = useState([0.1, 0.5, 1.0]);
+
+      return (
+        <div>
+          <button onClick={() => setOptions([0.1, 0.5, 1.0])}>
+            Set Identical Options
+          </button>
+          <TrackedSlippage options={options} />
+        </div>
+      );
+    };
+
+    render(<ParentComponent />);
+    expect(renderCount).toBe(1);
+
+    fireEvent.click(screen.getByRole('button', { name: /Set Identical Options/i }));
+    expect(renderCount).toBe(1);
+  });
+
+  it('re-renders when props change (value, options, status, or disabled)', () => {
+    let renderCount = 0;
+
+    const TrackedSlippage = (props: React.ComponentProps<typeof Slippage>) => {
+      renderCount++;
+      return <Slippage {...props} />;
+    };
+
+    const ParentComponent = () => {
+      const [value, setValue] = useState(0.5);
+      const [status, setStatus] = useState<'idle' | 'loading'>('idle');
+
+      return (
+        <div>
+          <button onClick={() => setValue(1.0)}>Change Value</button>
+          <button onClick={() => setStatus('loading')}>Change Status</button>
+          <TrackedSlippage value={value} status={status} />
+        </div>
+      );
+    };
+
+    render(<ParentComponent />);
+    expect(renderCount).toBe(1);
+
+    fireEvent.click(screen.getByRole('button', { name: /Change Value/i }));
+    expect(renderCount).toBe(2);
+    expect(screen.getByRole('button', { name: '1%' })).toHaveAttribute('aria-pressed', 'true');
+
+    fireEvent.click(screen.getByRole('button', { name: /Change Status/i }));
+    expect(renderCount).toBe(3);
+    expect(screen.getByTestId('slippage-loading')).toBeInTheDocument();
+  });
 });
+

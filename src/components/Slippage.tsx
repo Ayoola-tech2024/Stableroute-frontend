@@ -1,4 +1,4 @@
-import { memo, useState, useCallback, type ChangeEvent } from 'react';
+import { memo, useState, useCallback, useMemo, type ChangeEvent } from 'react';
 
 export type SlippageStatus = 'idle' | 'loading' | 'empty' | 'error' | 'success';
 
@@ -79,9 +79,38 @@ function SlippageBase({
     [min, max, onChange]
   );
 
-  const isPresetActive = (preset: number) => {
-    return customValue === '' && value === preset;
-  };
+  const isPresetActive = useCallback(
+    (preset: number) => {
+      return customValue === '' && value === preset;
+    },
+    [customValue, value]
+  );
+
+  const presetButtons = useMemo(() => {
+    return options.map((preset) => {
+      const active = isPresetActive(preset);
+      return (
+        <button
+          key={preset}
+          type="button"
+          aria-pressed={active}
+          disabled={disabled || status === 'loading'}
+          onClick={() => handlePresetSelect(preset)}
+          className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+            active
+              ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900'
+              : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700'
+          } ${
+            disabled || status === 'loading'
+              ? 'cursor-not-allowed opacity-50'
+              : ''
+          }`}
+        >
+          {preset}%
+        </button>
+      );
+    });
+  }, [options, isPresetActive, disabled, status, handlePresetSelect]);
 
   return (
     <div
@@ -139,29 +168,7 @@ function SlippageBase({
 
       {status !== 'empty' && status !== 'error' && (
         <div className="flex flex-wrap items-center gap-2">
-          {options.map((preset) => {
-            const active = isPresetActive(preset);
-            return (
-              <button
-                key={preset}
-                type="button"
-                aria-pressed={active}
-                disabled={disabled || status === 'loading'}
-                onClick={() => handlePresetSelect(preset)}
-                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                  active
-                    ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900'
-                    : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700'
-                } ${
-                  disabled || status === 'loading'
-                    ? 'cursor-not-allowed opacity-50'
-                    : ''
-                }`}
-              >
-                {preset}%
-              </button>
-            );
-          })}
+          {presetButtons}
 
           <div className="relative flex items-center">
             <input
@@ -214,4 +221,41 @@ function SlippageBase({
   );
 }
 
-export const Slippage = memo(SlippageBase);
+function arePropsEqual(prevProps: SlippageProps, nextProps: SlippageProps): boolean {
+  if (
+    prevProps.value !== nextProps.value ||
+    prevProps.status !== nextProps.status ||
+    prevProps.message !== nextProps.message ||
+    prevProps.min !== nextProps.min ||
+    prevProps.max !== nextProps.max ||
+    prevProps.disabled !== nextProps.disabled ||
+    prevProps.className !== nextProps.className ||
+    prevProps.onChange !== nextProps.onChange ||
+    prevProps.onRetry !== nextProps.onRetry
+  ) {
+    return false;
+  }
+
+  if (prevProps.options === nextProps.options) {
+    return true;
+  }
+
+  if (!prevProps.options || !nextProps.options) {
+    return prevProps.options === nextProps.options;
+  }
+
+  if (prevProps.options.length !== nextProps.options.length) {
+    return false;
+  }
+
+  for (let i = 0; i < prevProps.options.length; i++) {
+    if (prevProps.options[i] !== nextProps.options[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+export const Slippage = memo(SlippageBase, arePropsEqual);
+
