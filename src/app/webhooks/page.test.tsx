@@ -899,7 +899,9 @@ describe('WebhooksPage', () => {
       ) as unknown as typeof global.fetch;
     render(<WebhooksPage />);
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', { name: /retry/i })
+      ).toBeInTheDocument()
     );
     expect(document.querySelector('table')).not.toBeInTheDocument();
   });
@@ -929,7 +931,9 @@ describe('WebhooksPage', () => {
     render(<WebhooksPage />);
 
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', { name: /retry/i })
+      ).toBeInTheDocument()
     );
 
     const retryButton = screen.getByRole('button', { name: /retry/i });
