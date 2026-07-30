@@ -5,6 +5,7 @@ import { TextField } from '@/components/TextField';
 import { SlippageView } from './Slippage';
 import { apiFetch, type ApiError } from '@/lib/apiClient';
 import { formatQuoteAmountDisplay, formatQuoteRateDisplay } from '@/lib/format';
+import { useFormAnnouncement } from '@/lib/useFormAnnouncement';
 import { useLocalStorage } from '@/lib/useLocalStorage';
 import type { Quote } from '@/lib/types';
 import { isQuote } from '@/lib/validate';
@@ -85,6 +86,7 @@ export default function QuoteClient() {
   const [formError, setFormError] = useState<string | null>(null);
   const [requestId, setRequestId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const { message: formStatus, announce } = useFormAnnouncement();
   const activeRequestRef = useRef(0);
   const requestControllerRef = useRef<AbortController | null>(null);
   const lastSubmitAtRef = useRef<number | null>(null);
@@ -179,6 +181,7 @@ export default function QuoteClient() {
     activeRequestRef.current = currentRequestId;
 
     setLoading(true);
+    announce('Requesting quote…');
     try {
       const path =
         `/api/v1/quote?source_asset=${encodeURIComponent(normalizedSource)}` +
@@ -192,12 +195,14 @@ export default function QuoteClient() {
       if (currentRequestId !== activeRequestRef.current) return;
       setQuote(body);
       setHistory(pushHistory(inputs));
+      announce('Quote received.');
     } catch (err) {
       if (currentRequestId !== activeRequestRef.current) return;
       if (controller.signal.aborted) return;
       const apiError = err as ApiError & { requestId?: string };
       setFormError(apiError.message ?? 'quote request failed');
       setRequestId(apiError.requestId ?? null);
+      announce('');
     } finally {
       if (currentRequestId === activeRequestRef.current) {
         setLoading(false);
@@ -274,6 +279,9 @@ export default function QuoteClient() {
         >
           {loading ? 'Quoting…' : 'Get quote'}
         </button>
+        <p aria-live="polite" className="sr-only">
+          {formStatus}
+        </p>
       </form>
 
       {quote && (
