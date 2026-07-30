@@ -33,10 +33,7 @@ export const SegmentError = memo(function SegmentError({
     );
   }, [segment, error]);
 
-  const heading = useMemo(
-    () => `The ${segment} page hit an error.`,
-    [segment]
-  );
+  const heading = useMemo(() => `The ${segment} page hit an error.`, [segment]);
 
   const message = useMemo(
     () => error.message || 'Unexpected error.',
