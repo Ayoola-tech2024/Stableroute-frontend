@@ -12,7 +12,10 @@ function replaceLocalStorage(storage: Partial<Storage>) {
 }
 
 describe('ThemeToggle', () => {
+  let onChange: jest.Mock;
+
   beforeEach(() => {
+    onChange = jest.fn();
     window.localStorage.clear();
     document.documentElement.classList.remove('dark');
     Object.defineProperty(window, 'matchMedia', {
@@ -227,5 +230,28 @@ describe('ThemeToggle', () => {
         'true'
       );
     });
+  });
+
+  it('calls onChange with the selected theme', () => {
+    render(<ThemeToggle onChange={onChange} />);
+    fireEvent.click(screen.getByRole('button', { name: 'dark' }));
+    expect(onChange).toHaveBeenCalledWith('dark');
+  });
+
+  it('calls onChange for every theme selection', () => {
+    render(<ThemeToggle onChange={onChange} />);
+    fireEvent.click(screen.getByRole('button', { name: 'light' }));
+    fireEvent.click(screen.getByRole('button', { name: 'dark' }));
+    fireEvent.click(screen.getByRole('button', { name: 'system' }));
+    expect(onChange).toHaveBeenCalledTimes(3);
+    expect(onChange).toHaveBeenNthCalledWith(1, 'light');
+    expect(onChange).toHaveBeenNthCalledWith(2, 'dark');
+    expect(onChange).toHaveBeenNthCalledWith(3, 'system');
+  });
+
+  it('does not crash when onChange is omitted', () => {
+    expect(() => render(<ThemeToggle />)).not.toThrow();
+    fireEvent.click(screen.getByRole('button', { name: 'dark' }));
+    // No crash means the optional callback is handled correctly
   });
 });

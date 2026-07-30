@@ -329,7 +329,7 @@ export default function QuoteClient() {
       <SlippageView
         status={loading ? 'loading' : formError ? 'error' : quote ? 'success' : 'empty'}
         slippage={
-          quote ? `${((quote.estimated_rate - 1) * 100).toFixed(2)}%` : undefined
+          quote ? `${((Number(quote.estimated_rate) - 1) * 100).toFixed(2)}%` : undefined
         }
         errorMessage={formError ?? undefined}
         onRetry={formError ? retryQuote : undefined}

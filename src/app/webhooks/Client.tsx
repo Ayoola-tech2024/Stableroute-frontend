@@ -167,42 +167,21 @@ export default function WebhooksClient() {
           </p>
         )}
       </form>
-      <ResourceList
-        items={items}
-        loading={loading}
-        emptyMessage="No webhooks registered."
-        getKey={(hook) => hook.id}
-        announcement={formStatus || undefined}
-        caption="Registered webhooks"
-        tableHeaders={['URL', 'Events', 'Registered', 'Actions']}
-        renderRow={(hook, { requestRemove }) => (
-          <>
-            <div>
-              <p className="break-all text-sm font-medium">{hook.url}</p>
-              <p className="text-xs text-neutral-500">
-                Registered <TimeAgo ts={hook.createdAt} />
-              </p>
-              <p className="mt-1 text-sm text-rose-600 dark:text-rose-400">
-                {hooks.error}
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  void hooks.refetch();
-                }}
-                className="mt-4 rounded-full bg-black px-5 py-2 text-sm font-medium text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-              >
-                Retry
-              </button>
-            </div>
-          )}
-          {isEmpty && (
-            <EmptyState
-              title="No webhooks registered"
-              description="Register your first webhook endpoint using the form above."
-            />
-          )}
-        </div>
+      {isLoading && (
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">
+          Loading…
+        </p>
+      )}
+      {isError && !localError && (
+        <p role="alert" className="text-sm text-rose-600">
+          {hooks.error}
+        </p>
+      )}
+      {isEmpty && (
+        <EmptyState
+          title="No webhooks registered"
+          description="Register your first webhook endpoint using the form above."
+        />
       )}
       {hasData && (
         <ResourceList
@@ -210,6 +189,7 @@ export default function WebhooksClient() {
           loading={false}
           emptyMessage="No webhooks registered."
           getKey={(hook) => hook.id}
+          announcement={formStatus || undefined}
           caption="Registered webhooks"
           tableHeaders={['URL', 'Events', 'Registered', 'Actions']}
           renderRow={(hook, { requestRemove }) => (
