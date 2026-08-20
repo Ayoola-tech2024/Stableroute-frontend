@@ -53,9 +53,7 @@ export function Tooltip({ content, children, delay = 500 }: Props) {
         onMouseLeave: hide,
         onFocus: show,
         onBlur: hide,
-        onKeyDown: (
-          e: React.KeyboardEvent<HTMLElement>
-        ) => {
+        onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
           if (e.key === 'Escape') hide();
           children.props.onKeyDown?.(e);
         },

@@ -105,7 +105,10 @@ export default function PairsClient() {
         <ColumnVisibilityToggle visibility={visibility} onToggle={toggle} />
       </div>
       {api.status === 'error' && (
-        <div role="alert" className="flex flex-wrap items-center gap-3 rounded-lg border border-rose-200 bg-rose-50 p-4 dark:border-rose-900 dark:bg-rose-950">
+        <div
+          role="alert"
+          className="flex flex-wrap items-center gap-3 rounded-lg border border-rose-200 bg-rose-50 p-4 dark:border-rose-900 dark:bg-rose-950"
+        >
           <p className="text-sm text-rose-600 dark:text-rose-400">
             {api.error}
           </p>
@@ -152,7 +155,10 @@ export default function PairsClient() {
                 )}
                 <ul className="divide-y divide-neutral-200 rounded-lg border border-neutral-200 dark:divide-neutral-800 dark:border-neutral-800">
                   {destinations.map((dest) => (
-                    <li key={`${source}::${dest}`} className="px-4 py-3 compact:px-2 compact:py-1.5">
+                    <li
+                      key={`${source}::${dest}`}
+                      className="px-4 py-3 compact:px-2 compact:py-1.5"
+                    >
                       <div className="flex items-center justify-between gap-3">
                         {isColumnVisible('destination') ? (
                           <span className="font-mono text-sm">{dest}</span>

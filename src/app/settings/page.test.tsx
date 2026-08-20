@@ -160,7 +160,9 @@ describe('SettingsPage — density selection writes localStorage', () => {
       fireEvent.click(screen.getByLabelText(/comfortable/i));
     });
     expect(window.localStorage.getItem(STORAGE_KEY)).toBe('comfortable');
-    expect(document.documentElement.getAttribute('data-density')).toBe('comfortable');
+    expect(document.documentElement.getAttribute('data-density')).toBe(
+      'comfortable'
+    );
   });
 
   it("clicking Compact writes 'compact' under the documented storage key", async () => {
@@ -169,7 +171,9 @@ describe('SettingsPage — density selection writes localStorage', () => {
       fireEvent.click(screen.getByLabelText(/compact/i));
     });
     expect(window.localStorage.getItem(STORAGE_KEY)).toBe('compact');
-    expect(document.documentElement.getAttribute('data-density')).toBe('compact');
+    expect(document.documentElement.getAttribute('data-density')).toBe(
+      'compact'
+    );
   });
 
   it('checked state reflects the active selection', async () => {

@@ -27,7 +27,9 @@ export function Card({
       className={`rounded-lg border border-neutral-200 p-4 compact:p-2 dark:border-neutral-800 ${className}`}
       {...rest}
     >
-      {title && <header className="mb-2 font-medium compact:mb-1">{title}</header>}
+      {title && (
+        <header className="mb-2 font-medium compact:mb-1">{title}</header>
+      )}
       <div>{children}</div>
       {footer && (
         <footer

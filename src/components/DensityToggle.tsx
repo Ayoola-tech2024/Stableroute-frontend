@@ -27,7 +27,10 @@ export function DensityToggle() {
     <fieldset className="flex gap-4">
       <legend className="sr-only">Data density</legend>
       {(['comfortable', 'compact'] as const).map((d) => (
-        <label key={d} className="flex cursor-pointer items-center gap-2 text-sm">
+        <label
+          key={d}
+          className="flex cursor-pointer items-center gap-2 text-sm"
+        >
           <input
             type="radio"
             name="density"

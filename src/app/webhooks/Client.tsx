@@ -57,7 +57,11 @@ export default function WebhooksClient() {
       );
       setTestResults((prev) => ({
         ...prev,
-        [hookId]: { testing: false, statusCode: result.statusCode, ok: result.ok },
+        [hookId]: {
+          testing: false,
+          statusCode: result.statusCode,
+          ok: result.ok,
+        },
       }));
     } catch {
       setTestResults((prev) => ({
@@ -79,10 +83,7 @@ export default function WebhooksClient() {
   // between refetches, so this memo only recomputes when the list actually
   // changes.
   const webhookData = hooks.status === 'success' ? hooks.data : null;
-  const webhookItems = useMemo(
-    () => webhookData ?? [],
-    [webhookData]
-  );
+  const webhookItems = useMemo(() => webhookData ?? [], [webhookData]);
 
   const toggleEvent = (event: string) => {
     setSelectedEvents((current) =>
@@ -212,9 +213,8 @@ export default function WebhooksClient() {
                         : 'text-rose-600'
                     }`}
                   >
-                    Test delivery:{' '}
-                    {testResults[hook.id]?.ok ? 'OK' : 'Failed'} (
-                    {testResults[hook.id]?.statusCode})
+                    Test delivery: {testResults[hook.id]?.ok ? 'OK' : 'Failed'}{' '}
+                    ({testResults[hook.id]?.statusCode})
                   </p>
                 )}
               </div>

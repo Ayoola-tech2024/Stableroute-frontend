@@ -231,10 +231,13 @@ export default function QuoteClient() {
     }
   }, [amount, destAsset, setSavedInputs, sourceAsset, announce]);
 
-  const onSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    executeQuoteRequest();
-  }, [executeQuoteRequest]);
+  const onSubmit = useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      executeQuoteRequest();
+    },
+    [executeQuoteRequest]
+  );
 
   // Retry wrapper for the quote request – re‑uses the existing submission logic.
   const retryQuote = useCallback(() => {
@@ -309,7 +312,7 @@ export default function QuoteClient() {
         </p>
       </form>
 
-      {quote && (
+      {quote &&
         (() => {
           const amountFmt = formatQuoteAmountDisplay(quote.amount);
           const rateFmt = formatQuoteRateDisplay(quote.estimated_rate);
@@ -341,13 +344,22 @@ export default function QuoteClient() {
               </dl>
             </section>
           );
-        })()
-      )}
+        })()}
       {/* Slippage status UI */}
       <SlippageView
-        status={loading ? 'loading' : formError ? 'error' : quote ? 'success' : 'empty'}
+        status={
+          loading
+            ? 'loading'
+            : formError
+              ? 'error'
+              : quote
+                ? 'success'
+                : 'empty'
+        }
         slippage={
-          quote ? `${((Number(quote.estimated_rate) - 1) * 100).toFixed(2)}%` : undefined
+          quote
+            ? `${((Number(quote.estimated_rate) - 1) * 100).toFixed(2)}%`
+            : undefined
         }
         errorMessage={formError ?? undefined}
         onRetry={formError ? retryQuote : undefined}

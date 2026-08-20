@@ -1085,7 +1085,9 @@ describe('EventsPage', () => {
       });
 
       expect(screen.queryByRole('listitem')).not.toBeInTheDocument();
-      expect(screen.getByText(/No events match the filter/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/No events match the filter/i)
+      ).toBeInTheDocument();
       expect(
         screen.getByRole('button', { name: /clear filters/i })
       ).toBeEnabled();

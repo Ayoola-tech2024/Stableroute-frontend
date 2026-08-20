@@ -221,7 +221,10 @@ function SlippageBase({
   );
 }
 
-function arePropsEqual(prevProps: SlippageProps, nextProps: SlippageProps): boolean {
+function arePropsEqual(
+  prevProps: SlippageProps,
+  nextProps: SlippageProps
+): boolean {
   if (
     prevProps.value !== nextProps.value ||
     prevProps.status !== nextProps.status ||
@@ -258,4 +261,3 @@ function arePropsEqual(prevProps: SlippageProps, nextProps: SlippageProps): bool
 }
 
 export const Slippage = memo(SlippageBase, arePropsEqual);
-

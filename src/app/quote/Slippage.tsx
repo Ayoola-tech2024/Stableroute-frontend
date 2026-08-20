@@ -41,9 +41,7 @@ function SlippageBase({ status, slippage, errorMessage, onRetry }: Props) {
   // Wrap in a Tooltip on error to surface the error message.
   const tooltip =
     status === 'error' ? (
-      <Tooltip content={errorMessage ?? 'Error'}>
-        {liveRegion}
-      </Tooltip>
+      <Tooltip content={errorMessage ?? 'Error'}>{liveRegion}</Tooltip>
     ) : (
       liveRegion
     );

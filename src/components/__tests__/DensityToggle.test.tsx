@@ -21,13 +21,17 @@ describe('DensityToggle', () => {
 
     expect(compactRadio).toBeChecked();
     expect(localStorage.getItem('stableroute.density')).toBe('compact');
-    expect(document.documentElement.getAttribute('data-density')).toBe('compact');
+    expect(document.documentElement.getAttribute('data-density')).toBe(
+      'compact'
+    );
 
     const comfortableRadio = screen.getByLabelText(/comfortable/i);
     fireEvent.click(comfortableRadio);
 
     expect(comfortableRadio).toBeChecked();
     expect(localStorage.getItem('stableroute.density')).toBe('comfortable');
-    expect(document.documentElement.getAttribute('data-density')).toBe('comfortable');
+    expect(document.documentElement.getAttribute('data-density')).toBe(
+      'comfortable'
+    );
   });
 });

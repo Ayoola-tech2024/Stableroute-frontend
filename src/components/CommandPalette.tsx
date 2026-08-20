@@ -36,7 +36,6 @@ export function CommandPalette({
     route.title.toLowerCase().includes(query.toLowerCase())
   );
 
-  const [announcement, setAnnouncement] = useState('');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const announce = useCallback((message: string) => {
@@ -49,7 +48,9 @@ export function CommandPalette({
   useEffect(() => {
     if (!query) return;
     if (matches.length > 0) {
-      announce(`${matches.length} ${matches.length === 1 ? 'result' : 'results'} found`);
+      announce(
+        `${matches.length} ${matches.length === 1 ? 'result' : 'results'} found`
+      );
     } else {
       announce('No results found');
     }
@@ -201,28 +202,26 @@ export function CommandPalette({
           role="listbox"
           className="mt-2 max-h-64 overflow-auto"
         >
-          {matches.length > 0 ? (
-            matches.map((route, index) => (
-              <li key={route.href} role="presentation">
-                <button
-                  id={`command-palette-option-${route.href}`}
-                  role="option"
-                  aria-selected={index === activeIndex}
-                  type="button"
-                  className={`w-full rounded px-2 py-2 text-left text-sm transition-colors ${
-                    index === activeIndex
-                      ? 'bg-blue-500 text-white dark:bg-blue-600'
-                      : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'
-                  }`}
-                  onClick={() => handleOptionClick(route.href)}
-                  onMouseEnter={() => setActiveIndex(index)}
-                >
-                  {route.title}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+          {matches.map((route, index) => (
+            <li key={route.href} role="presentation">
+              <button
+                id={`command-palette-option-${route.href}`}
+                role="option"
+                aria-selected={index === activeIndex}
+                type="button"
+                className={`w-full rounded px-2 py-2 text-left text-sm transition-colors ${
+                  index === activeIndex
+                    ? 'bg-blue-500 text-white dark:bg-blue-600'
+                    : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                }`}
+                onClick={() => handleOptionClick(route.href)}
+                onMouseEnter={() => setActiveIndex(index)}
+              >
+                {route.title}
+              </button>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

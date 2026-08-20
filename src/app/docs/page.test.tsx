@@ -150,24 +150,16 @@ describe('DocsPage', () => {
     it('documents ARIA attributes in the table', () => {
       render(<DocsPage />);
       const table = screen.getByRole('table');
-      expect(
-        within(table).getByText(/aria-modal="true"/)
-      ).toBeInTheDocument();
+      expect(within(table).getByText(/aria-modal="true"/)).toBeInTheDocument();
       expect(
         within(table).getByText(/aria-label="Command palette"/)
       ).toBeInTheDocument();
-      expect(
-        within(table).getByText(/aria-expanded/)
-      ).toBeInTheDocument();
-      expect(
-        within(table).getByText(/aria-controls/)
-      ).toBeInTheDocument();
+      expect(within(table).getByText(/aria-expanded/)).toBeInTheDocument();
+      expect(within(table).getByText(/aria-controls/)).toBeInTheDocument();
       expect(
         within(table).getByText(/aria-activedescendant/)
       ).toBeInTheDocument();
-      expect(
-        within(table).getByText(/aria-selected/)
-      ).toBeInTheDocument();
+      expect(within(table).getByText(/aria-selected/)).toBeInTheDocument();
     });
 
     it('renders a usage example with import statement', () => {
@@ -179,9 +171,7 @@ describe('DocsPage', () => {
 
     it('shows the zero-props rendering pattern in the usage example', () => {
       render(<DocsPage />);
-      expect(
-        screen.getByText(/takes zero props/)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/takes zero props/)).toBeInTheDocument();
     });
   });
 });

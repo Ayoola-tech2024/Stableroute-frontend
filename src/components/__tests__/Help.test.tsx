@@ -8,7 +8,9 @@ describe('Help', () => {
         <button>Get help</button>
       </Help>
     );
-    expect(screen.getByRole('button', { name: /get help/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /get help/i })
+    ).toBeInTheDocument();
   });
 
   it('renders the loading state', () => {
@@ -88,7 +90,9 @@ describe('Help', () => {
         <span>trigger</span>
       </Help>
     );
-    expect(screen.getByRole('status')).toHaveTextContent(/^no help available$/i);
+    expect(screen.getByRole('status')).toHaveTextContent(
+      /^no help available$/i
+    );
   });
 
   it('does not re-render when props are referentially stable (memoized)', () => {

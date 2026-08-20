@@ -54,16 +54,24 @@ describe('Tooltip', () => {
     });
 
     it('accepts a custom delay via the delay prop', () => {
-      render(<Tooltip content="slow" delay={1000}><button>Button</button></Tooltip>);
+      render(
+        <Tooltip content="slow" delay={1000}>
+          <button>Button</button>
+        </Tooltip>
+      );
       const button = screen.getByRole('button', { name: 'Button' });
 
       fireEvent.mouseEnter(button);
       // Advance only 500 ms — default delay, but we set 1000
-      act(() => { jest.advanceTimersByTime(500); });
+      act(() => {
+        jest.advanceTimersByTime(500);
+      });
       expect(screen.queryByRole('tooltip')).toBeNull();
 
       // Now advance the remaining 500 ms
-      act(() => { jest.advanceTimersByTime(500); });
+      act(() => {
+        jest.advanceTimersByTime(500);
+      });
       expect(screen.getByRole('tooltip')).toBeInTheDocument();
     });
   });
@@ -245,11 +253,15 @@ describe('Tooltip', () => {
       // We need to blur first, focus the second.
       // The first tooltip should still be in DOM, so get the second tooltip too
       fireEvent.blur(first);
-      act(() => { jest.advanceTimersByTime(0); }); // let state settle
+      act(() => {
+        jest.advanceTimersByTime(0);
+      }); // let state settle
 
       fireEvent.focus(second);
       // Wait for delay
-      act(() => { jest.advanceTimersByTime(500); });
+      act(() => {
+        jest.advanceTimersByTime(500);
+      });
       const secondId = screen.getByRole('tooltip').getAttribute('id');
 
       expect(firstId).not.toBe(secondId);

@@ -10,7 +10,11 @@ export interface FiltersProps {
   onFilterChange?: (value: string) => void;
 }
 
-export const Filter: React.FC<FiltersProps> = ({ status, error, options = [] }) => {
+export const Filter: React.FC<FiltersProps> = ({
+  status,
+  error,
+  options = [],
+}) => {
   // Loading State
   if (status === 'loading') {
     return <div data-testid="filters-loading">Loading filters...</div>;
@@ -20,7 +24,9 @@ export const Filter: React.FC<FiltersProps> = ({ status, error, options = [] }) 
   if (status === 'error') {
     return (
       <div data-testid="filters-error" role="alert">
-        {typeof error === 'string' ? error : error?.message || 'Failed to load filters'}
+        {typeof error === 'string'
+          ? error
+          : error?.message || 'Failed to load filters'}
       </div>
     );
   }

@@ -80,7 +80,9 @@ describe('QuotePage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
 
     await waitFor(() => {
-      const quoteStatus = screen.getAllByRole('status').find((el) => el.textContent?.includes('USDC'));
+      const quoteStatus = screen
+        .getAllByRole('status')
+        .find((el) => el.textContent?.includes('USDC'));
       expect(quoteStatus).toHaveTextContent(/USDC → EURC/);
     });
     expect(mockFetch).toHaveBeenCalledWith(
@@ -133,7 +135,9 @@ describe('QuotePage', () => {
     } as unknown as Response);
 
     await waitFor(() => {
-      const quoteStatus = screen.getAllByRole('status').find((el) => el.textContent?.includes('USDC'));
+      const quoteStatus = screen
+        .getAllByRole('status')
+        .find((el) => el.textContent?.includes('USDC'));
       expect(quoteStatus).toHaveTextContent(/USDC → EURC/);
     });
   });
@@ -192,7 +196,9 @@ describe('QuotePage', () => {
     expect(secondSignal).toBeDefined();
 
     await waitFor(() => {
-      const quoteStatus = screen.getAllByRole('status').find((el) => el.textContent?.includes('USDC'));
+      const quoteStatus = screen
+        .getAllByRole('status')
+        .find((el) => el.textContent?.includes('USDC'));
       expect(quoteStatus).toHaveTextContent(/USDC → EURC/);
     });
   });
@@ -230,7 +236,9 @@ describe('QuotePage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
 
     await waitFor(() => {
-      const quoteStatus = screen.getAllByRole('status').find((el) => el.textContent?.includes('XLM'));
+      const quoteStatus = screen
+        .getAllByRole('status')
+        .find((el) => el.textContent?.includes('XLM'));
       expect(quoteStatus).toHaveTextContent(/1\.00 XLM/);
     });
     expect(screen.getByText('1.00 XLM')).toHaveAttribute('title', '10000000');
@@ -412,7 +420,9 @@ describe('QuotePage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Get quote/i }));
 
     await waitFor(() => {
-      const quoteStatus = screen.getAllByRole('status').find((el) => el.textContent?.includes('USDC'));
+      const quoteStatus = screen
+        .getAllByRole('status')
+        .find((el) => el.textContent?.includes('USDC'));
       expect(quoteStatus).toHaveTextContent(/USDC → EURC/);
     });
     expect(mockFetch).toHaveBeenCalledWith(
@@ -533,9 +543,7 @@ describe('QuotePage', () => {
       resolveRequest = resolve;
     });
 
-    const mockFetch = jest
-      .fn()
-      .mockImplementationOnce(() => pendingResponse);
+    const mockFetch = jest.fn().mockImplementationOnce(() => pendingResponse);
     globalThis.fetch = mockFetch as unknown as typeof globalThis.fetch;
 
     render(<QuotePage />);
