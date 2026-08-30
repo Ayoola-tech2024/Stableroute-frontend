@@ -1,3 +1,5 @@
+'use client';
+
 import React, { memo } from 'react';
 import type { HistoryEntry, QuoteInputs } from './historyModel';
 
@@ -10,19 +12,45 @@ export interface QuoteHistoryProps {
   hasPendingEntry?: boolean;
 }
 
+const COLUMN_LABELS: Record<SortColumn, string> = {
+  saved: 'Saved',
+  source: 'Source',
+  dest: 'Destination',
+  amount: 'Amount',
+};
+
+function ariaSortValue(dir: SortDir): 'ascending' | 'descending' | 'none' {
+  if (dir === 'asc') return 'ascending';
+  if (dir === 'desc') return 'descending';
+  return 'none';
+}
+
+/**
+ * The swap-interface list as a real data table.
+ *
+ * Sorting (asc/desc/none), text and enum filtering, and pagination are all
+ * encoded in the URL query string by `useTableViewState`, so any view is
+ * shareable and fully restored on reload. Derived rows are computed through
+ * one `useMemo` keyed on [history, view] so unrelated parent re-renders do
+ * not recompute them.
+ */
 export const QuoteHistory = memo(function QuoteHistory({
   history,
   onSelect,
   hasPendingEntry = false,
 }: QuoteHistoryProps) {
-  if (history.length === 0) {
-    return null;
-  }
+  const { view, update, filterInput, setFilterInput } = useTableViewState();
+
+  const derived = React.useMemo(
+    () => applyViewState(history, view),
+    [history, view]
+  );
+  const sources = React.useMemo(() => distinctSources(history), [history]);
 
   return (
     <section
       aria-labelledby="recent-quotes-heading"
-      className="flex flex-col gap-2"
+      className="flex flex-col gap-3"
     >
       <h2 id="recent-quotes-heading" className="text-sm font-medium">
         Recent quotes
